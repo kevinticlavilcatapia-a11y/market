@@ -2,301 +2,327 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Market POS v16: Fix Cobro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Market POS v17: Full Responsive</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
-            --bg: #f1f5f9;
+            --bg: #f8fafc;
             --surface: #ffffff;
             --text: #0f172a;
             --border: #e2e8f0;
             --success: #16a34a;
             --danger: #dc2626;
             --warning: #f59e0b;
-            --yape: #742284;
-            --plin: #00d1d1;
+            --nav-height-mobile: 60px;
+            --sidebar-width-desktop: 80px;
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0; 
+            height: 100dvh; /* Dynamic Viewport Height */
+            display: flex; overflow: hidden;
+        }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 80px; background: #0f172a; display: flex; flex-direction: column; align-items: center; padding-top: 20px; z-index: 100; }
-        .nav-btn { background: transparent; border: none; color: #94a3b8; font-size: 24px; cursor: pointer; padding: 12px; margin-bottom: 10px; border-radius: 12px; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .nav-btn span { font-size: 10px; font-weight: 600; display: none; }
-        .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4); }
+        /* --- 1. SIDEBAR (Navigation) --- */
+        .sidebar {
+            background: #0f172a; z-index: 100;
+            display: flex; transition: all 0.3s ease;
+        }
 
-        /* --- LAYOUT --- */
-        .main-content { flex: 1; display: none; flex-direction: column; height: 100%; position: relative; overflow: hidden; }
+        /* Desktop State */
+        @media (min-width: 769px) {
+            .sidebar {
+                width: var(--sidebar-width-desktop); height: 100%;
+                flex-direction: column; align-items: center; padding-top: 20px;
+            }
+            .nav-btn {
+                width: 50px; height: 50px; margin-bottom: 15px; border-radius: 12px;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                color: #94a3b8; background: transparent; border: none; cursor: pointer;
+            }
+            .nav-btn span { font-size: 9px; margin-top: 4px; font-weight: 600; }
+            .nav-btn i { font-size: 22px; font-style: normal; }
+            .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+            .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+        }
+
+        /* Mobile State */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%; height: var(--nav-height-mobile);
+                flex-direction: row; justify-content: space-around; align-items: center;
+                position: fixed; bottom: 0; left: 0;
+                border-top: 1px solid #1e293b; padding-bottom: env(safe-area-inset-bottom);
+                order: 2; /* Pone el menú al final visualmente */
+            }
+            .nav-btn {
+                background: transparent; border: none; color: #94a3b8; flex: 1; height: 100%;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+            }
+            .nav-btn i { font-size: 20px; font-style: normal; margin-bottom: 2px; }
+            .nav-btn span { font-size: 10px; }
+            .nav-btn.active { color: var(--primary); background: rgba(255,255,255,0.05); border-top: 3px solid var(--primary); }
+        }
+
+        /* --- 2. MAIN CONTENT --- */
+        .main-content {
+            flex: 1; display: none; flex-direction: column; height: 100%; 
+            position: relative; overflow: hidden; background: var(--bg);
+        }
         .main-content.active { display: flex; }
-        .header { background: var(--surface); padding: 0 20px; height: 60px; display: flex; align-items: center; border-bottom: 1px solid var(--border); justify-content: space-between; flex-shrink: 0; }
-        .title { font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text); letter-spacing: -0.5px; }
-        
-        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; white-space: nowrap;}
+
+        /* Header Universal */
+        .header {
+            height: 50px; background: var(--surface); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
+            flex-shrink: 0;
+        }
+        .title { font-size: 1.2rem; font-weight: 800; color: var(--text); margin: 0; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
         .status-open { background: #dcfce7; color: #166534; }
         .status-closed { background: #fee2e2; color: #991b1b; }
 
-        /* --- POS LAYOUT --- */
-        .pos-layout { display: flex; height: 100%; overflow: hidden; } /* Fix altura */
-        
-        /* Product List */
-        .products-section { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 1rem; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        /* --- 3. POS LAYOUT (El núcleo adaptable) --- */
+        .pos-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* Desktop POS */
+        @media (min-width: 769px) {
+            .pos-container { flex-direction: row; }
+            .products-area { flex: 1; padding: 20px; overflow-y: auto; }
+            .cart-area { width: 380px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+        }
+
+        /* Mobile POS */
+        @media (max-width: 768px) {
+            .main-content { height: calc(100dvh - var(--nav-height-mobile)); } /* Restar menú abajo */
+            .pos-container { flex-direction: column; }
+            .products-area { height: 60%; padding: 10px; overflow-y: auto; background: #f1f5f9; border-bottom: 1px solid var(--border); }
+            .cart-area { height: 40%; background: var(--surface); display: flex; flex-direction: column; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); z-index: 50; }
+        }
+
+        /* Componentes POS */
+        .search-bar { display: flex; gap: 10px; margin-bottom: 10px; }
+        .search-input { width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; }
         .search-input:focus { border-color: var(--primary); }
-        
-        .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; flex-shrink: 0; }
-        .cat-btn { background: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; font-weight: 600; white-space: nowrap; color: #64748b; }
+
+        .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; margin-bottom: 10px; }
+        .cat-btn { background: white; border: 1px solid var(--border); padding: 6px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; cursor: pointer; color: #64748b; }
         .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; padding-bottom: 20px; }
-        .card { background: white; padding: 12px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.03); transition: 0.1s; }
-        .card:active { transform: scale(0.97); border-color: var(--primary); }
-        .card.no-stock { opacity: 0.5; pointer-events: none; background: #f1f5f9; }
-        .badge-stock { font-size: 0.7rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #64748b; position: absolute; top: 10px; right: 10px; font-weight: bold; }
-        .price-tag { font-size: 1.1rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding-bottom: 20px; }
+        /* Grid más pequeño en móvil */
+        @media (max-width: 480px) { .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } }
 
-        /* Cart Section - FIXED */
-        .cart-section { 
-            width: 380px; background: white; border-left: 1px solid var(--border); 
-            display: flex; flex-direction: column; flex-shrink: 0; z-index: 50; 
-            height: 100%; /* Asegura altura completa */
-        }
-        .cart-header { padding: 15px; border-bottom: 1px solid var(--border); background: #f8fafc; font-weight: 800; color: #475569; flex-shrink: 0; }
-        .cart-list { flex: 1; overflow-y: auto; padding: 15px; } /* Crece */
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border); }
-        .qty-box { width: 35px; text-align: center; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font-weight: bold; }
+        .card { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; cursor: pointer; }
+        .card:active { transform: scale(0.96); border-color: var(--primary); }
+        .card.no-stock { opacity: 0.5; pointer-events: none; background: #f8fafc; }
+        .card-price { font-weight: 800; color: var(--primary); margin-top: 5px; }
+        .badge-stock { position: absolute; top: 5px; right: 5px; font-size: 0.65rem; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; }
+
+        /* Carrito */
+        .cart-header { padding: 10px; border-bottom: 1px solid var(--border); font-weight: bold; background: #f8fafc; flex-shrink: 0; display:flex; justify-content:space-between; }
+        .cart-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 0.9rem; }
+        .qty-control { width: 30px; text-align: center; border: 1px solid var(--border); border-radius: 4px; padding: 4px; }
         
-        .cart-total { 
-            padding: 20px; background: #fff; border-top: 1px solid var(--border); 
-            flex-shrink: 0; /* CRUCIAL: Impide que se oculte */
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
-        }
-        .btn-pay { 
-            width: 100%; background: var(--success); color: white; padding: 16px; border: none; border-radius: 12px; 
-            font-size: 1.2rem; font-weight: 800; cursor: pointer; display: flex; justify-content: center; align-items: center; 
-            box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2); transition: 0.2s;
-        }
-        .btn-pay:hover { background: #15803d; transform: translateY(-2px); }
-        .btn-pay:active { transform: translateY(0); }
-        .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
+        .cart-footer { padding: 15px; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+        .btn-pay { width: 100%; background: var(--success); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; }
 
-        /* --- MOBILE STYLES --- */
-        @media screen and (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; height: 60px; flex-direction: row; justify-content: space-around; 
-                position: fixed; bottom: 0; left: 0; padding: 0; border-top: 1px solid var(--border); 
-                background: white; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); order: 2;
-            }
-            .nav-btn { margin: 0; padding: 8px; font-size: 20px; color: #94a3b8; flex: 1; border-radius: 0; height: 100%; justify-content: center; }
-            .nav-btn span { display: block; margin-top: 2px; }
-            .nav-btn.active { color: var(--primary); background: none; box-shadow: none; border-top: 3px solid var(--primary); }
-
-            .main-content { height: calc(100vh - 60px); order: 1; padding-bottom: 0; }
-            
-            .pos-layout { flex-direction: column; }
-            .products-section { height: 60%; border-bottom: 1px solid var(--border); }
-            .cart-section { 
-                width: 100%; height: 40%; border-left: none; 
-                box-shadow: 0 -5px 15px rgba(0,0,0,0.1); 
-            }
-            .cart-header { padding: 8px 15px; font-size: 0.9rem; }
-            .cart-list { padding: 10px; }
-            .cart-total { padding: 12px; }
-            .btn-pay { padding: 12px; font-size: 1.1rem; }
-            
-            /* Ajuste teclado móvil */
-            .grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
-            .card { padding: 10px; }
-            .header { padding: 0 15px; height: 50px; }
-            .title { font-size: 1.2rem; }
-        }
-
-        /* --- OTROS ESTILOS (Inventario, Kardex, etc) --- */
-        .container-fluid { padding: 20px; overflow-y: auto; height: 100%; width: 100%; }
-        .form-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 5px; font-weight: 600; color: #64748b; }
-        .input-group input, .input-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
-        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-sm { padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; border:none; color:white; cursor:pointer;}
+        /* --- 4. GENERAL UI (Inventario, Reportes) --- */
+        .page-container { padding: 15px; overflow-y: auto; height: 100%; }
         
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 15px; min-width: 600px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #64748b; }
-        .table-responsive { overflow-x: auto; }
+        .form-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .form-grid { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .input-group { flex: 1; min-width: 120px; }
+        .input-group label { display: block; font-size: 0.75rem; margin-bottom: 4px; font-weight: 600; color: #64748b; }
+        .input-group input, .input-group select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+        
+        .btn-primary { background: var(--primary); color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-sm { padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; border: none; color: white; cursor: pointer; }
 
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-box { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--text); margin-top: 5px; }
+        /* Tablas con scroll horizontal */
+        .table-wrap { overflow-x: auto; width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 600px; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; color: #475569; }
 
-        /* Modals */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(2px); align-items: center; justify-content: center; }
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+        .stat-lbl { font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
+
+        /* --- MODALS --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.open { display: flex; }
-        .modal-content { background: white; width: 90%; max-width: 450px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; animation: fadeUp 0.2s; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-header { padding: 15px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-box { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-header { padding: 12px 15px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .modal-body { padding: 15px; overflow-y: auto; }
+        
+        .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .pay-btn { padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .pay-btn:hover { background: #f1f5f9; border-color: var(--primary); }
 
-        .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-method { padding: 15px; font-size: 1rem; border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-method:hover { opacity: 0.9; transform: scale(1.02); }
-        .bg-cash { background: var(--success); } .bg-yape { background: var(--yape); } .bg-plin { background: var(--plin); } .bg-card { background: var(--text); }
-
+        /* Print Hidden */
         #print-area { display: none; }
-        @media print { @page { margin: 0; } body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; font-size: 12px; padding: 10px; } }
+        @media print { @page { margin: 0; } body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <button class="nav-btn active" onclick="nav('pos')">🛒<span>Vender</span></button>
-        <button class="nav-btn" onclick="nav('caja')">🏪<span>Caja</span></button>
-        <button class="nav-btn" onclick="nav('inv')">📦<span>Stock</span></button>
-        <button class="nav-btn" onclick="nav('audit')">👁️<span>Kardex</span></button>
-        <button class="nav-btn" onclick="nav('rep')">📊<span>Reporte</span></button>
-    </div>
+    <nav class="sidebar">
+        <button class="nav-btn active" onclick="nav('pos')"><i>🛒</i><span>Ventas</span></button>
+        <button class="nav-btn" onclick="nav('caja')"><i>🏪</i><span>Caja</span></button>
+        <button class="nav-btn" onclick="nav('inv')"><i>📦</i><span>Stock</span></button>
+        <button class="nav-btn" onclick="nav('audit')"><i>👁️</i><span>Kardex</span></button>
+        <button class="nav-btn" onclick="nav('rep')"><i>📊</i><span>Reporte</span></button>
+    </nav>
 
-    <div id="pos" class="main-content active">
+    <section id="pos" class="main-content active">
         <div class="header">
             <div class="title">Market</div>
-            <div id="posBadge" class="status-badge status-closed">Caja Cerrada</div>
+            <div id="posBadge" class="status-badge status-closed">Cerrado</div>
         </div>
-        <div class="pos-layout">
-            <div class="products-section">
-                <input type="text" id="posSearch" class="search-input" placeholder="🔍 Buscar producto..." autocomplete="off">
-                <div class="cat-scroll" id="catNav" style="margin-top:10px;"></div>
-                <div class="grid" id="posGrid" style="margin-top:15px;"></div>
+        <div class="pos-container">
+            <div class="products-area">
+                <div class="search-bar"><input type="text" id="posSearch" class="search-input" placeholder="🔍 Buscar..." autocomplete="off"></div>
+                <div class="cat-scroll" id="catNav"></div>
+                <div class="grid" id="posGrid"></div>
             </div>
-            <div class="cart-section">
-                <div class="cart-header">Ticket Actual</div>
+            <div class="cart-area">
+                <div class="cart-header"><span>Ticket</span> <small id="cartCount">0 items</small></div>
                 <div class="cart-list" id="cartItems"></div>
-                <div class="cart-total">
-                    <div style="display:flex; justify-content:space-between; font-size:1.3rem; font-weight:800; margin-bottom:10px; color:var(--text);">
-                        <span>Total</span>
-                        <span>S/ <span id="cartTotal">0.00</span></span>
-                    </div>
+                <div class="cart-footer">
+                    <div class="total-row"><span>Total</span><span>S/ <span id="cartTotal">0.00</span></span></div>
                     <button id="btnPay" class="btn-pay" onclick="openPayModal()" disabled>COBRAR</button>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div id="caja" class="main-content">
-        <div class="header"><div class="title">Caja</div><div id="cajaBadge" class="status-badge status-closed">Cerrado</div></div>
-        <div class="container-fluid">
-            <div id="cajaClosed" class="form-card" style="text-align:center; max-width:400px; margin:20px auto;">
-                <h3>🔐 Apertura de Caja</h3>
-                <div class="input-group"><label>Fondo Inicial (S/)</label><input type="number" id="initAmount" placeholder="0.00"></div>
-                <button class="btn-primary" style="width:100%" onclick="openSession()">Abrir Turno</button>
-            </div>
-            <div id="cajaOpen" style="display:none;">
-                <div class="stats-row">
-                    <div class="stat-box"><div class="stat-label">Inicio</div><div class="stat-val" id="valInit" style="color:#64748b">0.00</div></div>
-                    <div class="stat-box"><div class="stat-label">Ventas</div><div class="stat-val" id="valSalesTotal" style="color:var(--primary)">0.00</div></div>
-                    <div class="stat-box"><div class="stat-label">Movs.</div><div class="stat-val" id="valMoves" style="color:var(--warning)">0.00</div></div>
-                    <div class="stat-box" style="background:#f0fdfa; border-color:var(--success);"><div class="stat-label">En Caja</div><div class="stat-val" id="valExpected" style="color:var(--success)">0.00</div></div>
+    <section id="caja" class="main-content">
+        <div class="header"><div class="title">Control Caja</div><div id="cajaBadge" class="status-badge status-closed">Cerrado</div></div>
+        <div class="page-container">
+            <div id="cajaClosed" class="form-card" style="text-align:center; margin-top:20px;">
+                <h3>🔐 Caja Cerrada</h3>
+                <div class="input-group" style="margin-bottom:15px; text-align:left;">
+                    <label>Fondo Inicial (S/)</label>
+                    <input type="number" id="initAmount" placeholder="0.00">
                 </div>
-                
-                <div class="form-card">
-                    <h4>📝 Movimientos (Gastos/Ingresos)</h4>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <select id="moveType" style="flex:1;"><option value="out">🔴 Gasto</option><option value="in">🟢 Ingreso</option></select>
-                        <input type="text" id="moveDesc" placeholder="Motivo" style="flex:2;">
-                        <input type="number" id="moveAmount" placeholder="Monto" style="flex:1;">
-                        <button class="btn-primary" onclick="addMovement()">OK</button>
-                    </div>
-                    <div style="margin-top:10px; max-height:150px; overflow-y:auto;" id="moveList"></div>
-                </div>
-
-                <div class="form-card" style="border-left:5px solid var(--danger);">
-                    <h4>🔒 Cierre de Turno</h4>
-                    <div style="display:flex; gap:10px; align-items:flex-end;">
-                        <div class="input-group" style="flex:1;"><label>Efectivo Real (Contado)</label><input type="number" id="endAmount" placeholder="0.00"></div>
-                        <button class="btn-primary" style="background:var(--danger);" onclick="closeSession()">Cerrar</button>
-                    </div>
-                </div>
+                <button class="btn-primary" style="width:100%" onclick="openSession()">ABRIR TURNO</button>
             </div>
             
+            <div id="cajaOpen" style="display:none;">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-lbl">Inicio</div><div class="stat-val" id="valInit" style="color:#64748b">0.00</div></div>
+                    <div class="stat-card"><div class="stat-lbl">Ventas</div><div class="stat-val" id="valSalesTotal" style="color:var(--primary)">0.00</div></div>
+                    <div class="stat-card"><div class="stat-lbl">Movs</div><div class="stat-val" id="valMoves" style="color:var(--warning)">0.00</div></div>
+                    <div class="stat-card" style="background:#f0fdfa; border-color:var(--success)"><div class="stat-lbl">En Caja</div><div class="stat-val" id="valExpected" style="color:var(--success)">0.00</div></div>
+                </div>
+
+                <div class="form-card">
+                    <h4>Movimientos (Gastos/Ingresos)</h4>
+                    <div class="form-grid">
+                        <div class="input-group"><select id="moveType"><option value="out">🔴 Gasto</option><option value="in">🟢 Ingreso</option></select></div>
+                        <div class="input-group" style="flex:2"><input type="text" id="moveDesc" placeholder="Motivo"></div>
+                        <div class="input-group"><input type="number" id="moveAmount" placeholder="Monto"></div>
+                        <button class="btn-primary" onclick="addMovement()">OK</button>
+                    </div>
+                    <div id="moveList" style="margin-top:10px; max-height:120px; overflow-y:auto; font-size:0.85rem;"></div>
+                </div>
+
+                <div class="form-card" style="border-left:4px solid var(--danger)">
+                    <h4>Cierre de Turno</h4>
+                    <div class="form-grid">
+                        <div class="input-group" style="flex:2"><label>Efectivo Real (Contado)</label><input type="number" id="endAmount" placeholder="0.00"></div>
+                        <button class="btn-primary" style="background:var(--danger)" onclick="closeSession()">CERRAR</button>
+                    </div>
+                </div>
+            </div>
+
             <h3>Historial</h3>
-            <div class="table-responsive">
+            <div class="table-wrap">
                 <table><thead><tr><th>ID</th><th>Inicio</th><th>Ventas</th><th>Dif.</th><th>PDF</th></tr></thead><tbody id="sessionHistory"></tbody></table>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div id="inv" class="main-content">
+    <section id="inv" class="main-content">
         <div class="header"><div class="title">Inventario</div></div>
-        <div class="container-fluid">
+        <div class="page-container">
             <div class="form-card" style="background:#f0fdfa;">
-                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-                    <div class="input-group" style="flex:2;"><label>Scanner Ingreso</label><input type="text" id="stkScan" placeholder="Código..."></div>
-                    <div class="input-group" style="width:80px;"><label>Cant.</label><input type="number" id="stkQty" placeholder="0"></div>
+                <div class="form-grid">
+                    <div class="input-group" style="flex:2"><label>Scanner (Stock +)</label><input type="text" id="stkScan" placeholder="Código..."></div>
+                    <div class="input-group"><label>Cant.</label><input type="number" id="stkQty" placeholder="0"></div>
                     <button class="btn-primary" onclick="stockIn()">+</button>
                 </div>
-                <div id="stkPreview" style="margin-top:5px; color:#64748b; font-size:0.9rem;">Esperando...</div>
+                <div id="stkPreview" style="font-size:0.85rem; color:#64748b; margin-top:5px;">...</div>
             </div>
-            
+
             <div class="form-card">
                 <h4>Nuevo Producto</h4>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <input id="nId" class="search-input" placeholder="ID" style="width:80px;">
-                    <input id="nName" class="search-input" placeholder="Nombre" style="flex:1;">
-                    <input id="nCat" class="search-input" placeholder="Cat" list="lCats" style="flex:1;">
-                    <input id="nPrice" class="search-input" placeholder="Precio" type="number" style="width:80px;">
-                    <input id="nStock" class="search-input" placeholder="Stock" type="number" style="width:70px;">
-                    <select id="nType" class="search-input" style="width:80px;"><option value="product">Prd</option><option value="service">Srv</option></select>
+                <div class="form-grid">
+                    <div class="input-group"><input id="nId" placeholder="ID"></div>
+                    <div class="input-group" style="flex:2"><input id="nName" placeholder="Nombre"></div>
+                    <div class="input-group"><input id="nCat" placeholder="Cat" list="lCats"></div>
+                    <div class="input-group"><input id="nPrice" placeholder="Precio" type="number"></div>
+                    <div class="input-group"><input id="nStock" placeholder="Stock" type="number"></div>
+                    <div class="input-group"><select id="nType"><option value="product">Prod</option><option value="service">Serv</option></select></div>
                     <button class="btn-primary" onclick="addProd()">Crear</button>
                 </div>
                 <datalist id="lCats"></datalist>
             </div>
-            
-            <div class="table-responsive">
+
+            <div class="table-wrap">
                 <table><thead><tr><th>ID</th><th>Prod</th><th>Cat</th><th>$</th><th>Stock</th><th>Acc</th></tr></thead><tbody id="tInv"></tbody></table>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div id="audit" class="main-content">
+    <section id="audit" class="main-content">
         <div class="header"><div class="title">Kardex</div></div>
-        <div class="container-fluid">
-            <input type="text" id="auditSearch" placeholder="🔍 Filtrar..." class="search-input" onkeyup="renderKardex()" style="margin-bottom:15px;">
-            <div class="table-responsive">
+        <div class="page-container">
+            <input type="text" id="auditSearch" class="search-input" placeholder="🔍 Filtrar..." onkeyup="renderKardex()" style="margin-bottom:10px;">
+            <div class="table-wrap">
                 <table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Fin</th><th>Nota</th></tr></thead><tbody id="tAudit"></tbody></table>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div id="rep" class="main-content">
+    <section id="rep" class="main-content">
         <div class="header"><div class="title">Reportes</div></div>
-        <div class="container-fluid">
-            <div class="table-responsive">
-                <table><thead><tr><th>Ticket</th><th>Fecha</th><th>Pago</th><th>Total</th><th>Ver</th></tr></thead><tbody id="tRep"></tbody></table>
+        <div class="page-container">
+            <div class="table-wrap">
+                <table><thead><tr><th>Ticket</th><th>Fecha</th><th>Metodo</th><th>Total</th><th>Ver</th></tr></thead><tbody id="tRep"></tbody></table>
             </div>
         </div>
-    </div>
+    </section>
 
     <div id="payModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header"><h3>Método de Pago</h3><span onclick="closePayModal()" style="font-size:1.5rem;cursor:pointer">×</span></div>
+        <div class="modal-box">
+            <div class="modal-header"><span>Método de Pago</span><span onclick="closePayModal()" style="font-size:1.5rem;cursor:pointer">×</span></div>
             <div class="modal-body">
                 <div style="text-align:center; font-size:1.2rem; margin-bottom:15px;">Total: <b>S/ <span id="payTotalDisplay">0.00</span></b></div>
-                <div class="pay-methods">
-                    <button class="btn-method bg-cash" onclick="confirmSale('Efectivo')">💵 Efectivo</button>
-                    <button class="btn-method bg-yape" onclick="confirmSale('Yape')">📱 Yape</button>
-                    <button class="btn-method bg-plin" onclick="confirmSale('Plin')">🔄 Plin</button>
-                    <button class="btn-method bg-card" onclick="confirmSale('Tarjeta')">💳 Tarjeta</button>
+                <div class="pay-grid">
+                    <button class="pay-btn" onclick="confirmSale('Efectivo')"><span style="font-size:1.5rem">💵</span>Efectivo</button>
+                    <button class="pay-btn" onclick="confirmSale('Yape')"><span style="font-size:1.5rem; color:#742284">📱</span>Yape</button>
+                    <button class="pay-btn" onclick="confirmSale('Plin')"><span style="font-size:1.5rem; color:#00d1d1">🔄</span>Plin</button>
+                    <button class="pay-btn" onclick="confirmSale('Tarjeta')"><span style="font-size:1.5rem">💳</span>Tarjeta</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="detModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header"><h3>Detalle</h3><span onclick="document.getElementById('detModal').classList.remove('open')" style="font-size:1.5rem;cursor:pointer">×</span></div>
+        <div class="modal-box">
+            <div class="modal-header"><span>Detalle Venta</span><span onclick="document.getElementById('detModal').classList.remove('open')" style="font-size:1.5rem;cursor:pointer">×</span></div>
             <div class="modal-body" id="detBody"></div>
         </div>
     </div>
@@ -304,145 +330,254 @@
     <div id="print-area"></div>
 
     <script>
-        // --- LOGIC ---
-        let db = JSON.parse(localStorage.getItem('pos_db_v16')) || [{id:101, name:"Agua 500ml", price:1.50, stock:50, category:"Bebidas", type:"product"}];
-        let sales = JSON.parse(localStorage.getItem('pos_sales_v16')) || [];
-        let sessions = JSON.parse(localStorage.getItem('pos_sessions_v16')) || [];
-        let kardex = JSON.parse(localStorage.getItem('pos_kardex_v16')) || [];
+        // --- DATA STORE ---
+        let db = JSON.parse(localStorage.getItem('pos_db_v17')) || [{id:101, name:"Agua 500ml", price:1.50, stock:50, category:"Bebidas", type:"product"}];
+        let sales = JSON.parse(localStorage.getItem('pos_sales_v17')) || [];
+        let sessions = JSON.parse(localStorage.getItem('pos_sessions_v17')) || [];
+        let kardex = JSON.parse(localStorage.getItem('pos_kardex_v17')) || [];
         let cart = [];
         let curTab = 'pos';
         let stockSel = null;
 
         window.onload = () => { nav('pos'); setupKeys(); };
 
+        // --- NAVIGATION ---
         function nav(t) {
             curTab = t;
-            document.querySelectorAll('.main-content').forEach(e=>e.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
+            document.querySelectorAll('.main-content').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
             document.getElementById(t).classList.add('active');
-            const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(`'${t}'`));
-            if(btn) btn.classList.add('active');
+            
+            // Set active class on buttons
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(b => { if(b.getAttribute('onclick').includes(t)) b.classList.add('active'); });
 
-            if(t==='pos') { renderPOS(); renderCats(); }
-            if(t==='caja') checkCaja();
-            if(t==='inv') renderInv();
-            if(t==='audit') renderKardex();
-            if(t==='rep') renderRep();
+            if(t === 'pos') { renderPOS(); renderCats(); }
+            if(t === 'caja') checkCaja();
+            if(t === 'inv') renderInv();
+            if(t === 'audit') renderKardex();
+            if(t === 'rep') renderRep();
         }
 
         function setupKeys() {
-            document.addEventListener('keydown', e => { if(e.target.tagName!=='INPUT' && e.key.length===1 && curTab==='pos') document.getElementById('posSearch').focus(); });
-            document.getElementById('posSearch').addEventListener('input', ()=>renderPOS());
-            document.getElementById('posSearch').addEventListener('keydown', e=>{if(e.key==='Enter')scanPOS(e.target.value)});
-            document.getElementById('stkScan').addEventListener('keydown', e=>{if(e.key==='Enter')scanStk(e.target.value)});
+            document.addEventListener('keydown', e => { 
+                if(e.target.tagName !== 'INPUT' && e.key.length === 1 && curTab === 'pos') document.getElementById('posSearch').focus(); 
+            });
+            document.getElementById('posSearch').addEventListener('input', () => renderPOS());
+            document.getElementById('posSearch').addEventListener('keydown', e => { if(e.key === 'Enter') scanPOS(e.target.value); });
+            document.getElementById('stkScan').addEventListener('keydown', e => { if(e.key === 'Enter') scanStk(e.target.value); });
         }
 
-        // --- CAJA ---
-        function getActive() { return sessions.find(s=>s.status==='open'); }
+        // --- CAJA & PDF ---
+        function getActive() { return sessions.find(s => s.status === 'open'); }
         function checkCaja() {
             const act = getActive();
+            // Badges
             document.getElementById('posBadge').className = act ? 'status-badge status-open' : 'status-badge status-closed';
-            document.getElementById('posBadge').innerText = act ? 'Caja Abierta' : 'Cerrada';
+            document.getElementById('posBadge').innerText = act ? 'Abierto' : 'Cerrado';
             document.getElementById('cajaBadge').className = document.getElementById('posBadge').className;
             document.getElementById('cajaBadge').innerText = document.getElementById('posBadge').innerText;
             document.getElementById('btnPay').disabled = !act;
 
-            document.getElementById('sessionHistory').innerHTML = [...sessions].reverse().map(s=>
-                `<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td><td>S/ ${s.salesTotal.toFixed(2)}</td><td style="color:${s.diff<0?'red':'green'}">${s.diff?s.diff.toFixed(2):'-'}</td><td><button class="btn-sm" style="background:#dc2626;" onclick="downloadPDF(${s.id})">PDF</button></td></tr>`
-            ).join('');
+            // Historial
+            document.getElementById('sessionHistory').innerHTML = [...sessions].reverse().map(s => `
+                <tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td>
+                <td>S/ ${s.salesTotal.toFixed(2)}</td><td style="color:${s.diff<0?'red':'green'}">${s.diff?s.diff.toFixed(2):'-'}</td>
+                <td><button class="btn-sm" style="background:#dc2626" onclick="downloadPDF(${s.id})">PDF</button></td></tr>
+            `).join('');
 
             if(act) {
-                document.getElementById('cajaClosed').style.display='none'; document.getElementById('cajaOpen').style.display='block';
+                document.getElementById('cajaClosed').style.display = 'none';
+                document.getElementById('cajaOpen').style.display = 'block';
                 document.getElementById('valInit').innerText = act.init.toFixed(2);
                 document.getElementById('valSalesTotal').innerText = act.salesTotal.toFixed(2);
                 document.getElementById('valMoves').innerText = act.moves.toFixed(2);
-                act.expected = act.init + (act.salesCash||0) + act.moves;
+                act.expected = act.init + (act.salesCash || 0) + act.moves;
                 document.getElementById('valExpected').innerText = act.expected.toFixed(2);
-                document.getElementById('moveList').innerHTML = (act.movements||[]).map(m=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px;font-size:0.85rem;"><span>${m.desc}</span><span style="color:${m.type==='in'?'green':'red'}">${m.type==='in'?'+':'-'} ${m.amount}</span></div>`).join('');
+                
+                document.getElementById('moveList').innerHTML = (act.movements || []).map(m => 
+                    `<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px;">
+                        <span>${m.desc}</span><span style="color:${m.type==='in'?'green':'red'}">${m.type==='in'?'+':'-'} ${m.amount}</span>
+                    </div>`).join('');
             } else {
-                document.getElementById('cajaClosed').style.display='block'; document.getElementById('cajaOpen').style.display='none';
+                document.getElementById('cajaClosed').style.display = 'block';
+                document.getElementById('cajaOpen').style.display = 'none';
             }
         }
+
         function openSession() {
             const v = parseFloat(document.getElementById('initAmount').value);
             if(isNaN(v)) return alert("Monto inválido");
             sessions.push({id:Date.now(), start:new Date().toISOString(), end:null, init:v, salesTotal:0, salesCash:0, salesYape:0, salesPlin:0, salesCard:0, moves:0, expected:v, real:0, diff:0, status:'open', movements:[]});
-            saveData(); checkCaja(); document.getElementById('initAmount').value='';
+            saveData(); checkCaja(); document.getElementById('initAmount').value = '';
         }
+
         function addMovement() {
             const act = getActive(); if(!act) return;
-            const t=document.getElementById('moveType').value, d=document.getElementById('moveDesc').value, a=parseFloat(document.getElementById('moveAmount').value);
+            const t = document.getElementById('moveType').value, d = document.getElementById('moveDesc').value, a = parseFloat(document.getElementById('moveAmount').value);
             if(!d || isNaN(a)) return;
-            act.moves += (t==='in'?a:-a); act.movements.push({type:t, desc:d, amount:a});
-            saveData(); checkCaja(); document.getElementById('moveDesc').value=''; document.getElementById('moveAmount').value='';
+            act.moves += (t === 'in' ? a : -a); 
+            act.movements.push({type:t, desc:d, amount:a});
+            saveData(); checkCaja(); 
+            document.getElementById('moveDesc').value = ''; document.getElementById('moveAmount').value = '';
         }
+
         function closeSession() {
-            const act=getActive(); if(!act) return;
+            const act = getActive(); if(!act) return;
             const r = parseFloat(document.getElementById('endAmount').value);
             if(isNaN(r)) return alert("Ingresa efectivo real");
             if(!confirm("¿Cerrar Turno?")) return;
-            act.real=r; act.diff=r-act.expected; act.end=new Date().toISOString(); act.status='closed';
-            saveData(); downloadPDF(act.id); checkCaja(); document.getElementById('endAmount').value='';
+            act.real = r; act.diff = r - act.expected; act.end = new Date().toISOString(); act.status = 'closed';
+            saveData(); downloadPDF(act.id); checkCaja(); document.getElementById('endAmount').value = '';
         }
 
         function downloadPDF(sid) {
-            const s = sessions.find(x=>x.id===sid); if(!s) return;
-            const html = `<div style="padding:20px;font-family:sans-serif;color:#333;"><h3 style="text-align:center;">REPORTE #${s.id}</h3><p style="text-align:center;font-size:12px;">${new Date(s.start).toLocaleString()} - ${new Date(s.end).toLocaleString()}</p><hr><table style="width:100%;font-size:14px;margin-bottom:10px;"><tr><td>Ventas Totales:</td><td style="text-align:right">S/ ${s.salesTotal.toFixed(2)}</td></tr><tr><td>- Efectivo:</td><td style="text-align:right">S/ ${(s.salesCash||0).toFixed(2)}</td></tr><tr><td>- Digital:</td><td style="text-align:right">S/ ${(s.salesTotal-(s.salesCash||0)).toFixed(2)}</td></tr></table><div style="background:#f1f5f9;padding:10px;border-radius:5px;"><table style="width:100%;font-weight:bold;"><tr><td>Fondo Inicial:</td><td style="text-align:right">S/ ${s.init.toFixed(2)}</td></tr><tr><td>Entradas/Salidas:</td><td style="text-align:right">S/ ${s.moves.toFixed(2)}</td></tr><tr><td>ESPERADO:</td><td style="text-align:right">S/ ${s.expected.toFixed(2)}</td></tr><tr><td>REAL:</td><td style="text-align:right">S/ ${(s.real||0).toFixed(2)}</td></tr><tr style="color:${s.diff<0?'red':'green'}"><td>DIFERENCIA:</td><td style="text-align:right">S/ ${(s.diff||0).toFixed(2)}</td></tr></table></div></div>`;
-            html2pdf().set({margin:10,filename:`Cierre_${s.id}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a5',orientation:'portrait'}}).from(html).save();
+            const s = sessions.find(x => x.id === sid); if(!s) return;
+            const html = `
+                <div style="padding:20px;font-family:sans-serif;color:#333;">
+                    <h3 style="text-align:center;">REPORTE #${s.id}</h3>
+                    <p style="text-align:center;font-size:12px;">${new Date(s.start).toLocaleString()} - ${new Date(s.end).toLocaleString()}</p>
+                    <hr>
+                    <table style="width:100%;font-size:14px;margin-bottom:10px;">
+                        <tr><td>Ventas Totales:</td><td style="text-align:right">S/ ${s.salesTotal.toFixed(2)}</td></tr>
+                        <tr><td>- Efectivo:</td><td style="text-align:right">S/ ${(s.salesCash||0).toFixed(2)}</td></tr>
+                        <tr><td>- Yape/Plin/Tarj:</td><td style="text-align:right">S/ ${(s.salesTotal-(s.salesCash||0)).toFixed(2)}</td></tr>
+                    </table>
+                    <div style="background:#f1f5f9;padding:10px;border-radius:5px;">
+                        <table style="width:100%;font-weight:bold;">
+                            <tr><td>Fondo Inicial:</td><td style="text-align:right">S/ ${s.init.toFixed(2)}</td></tr>
+                            <tr><td>Movimientos Caja:</td><td style="text-align:right">S/ ${s.moves.toFixed(2)}</td></tr>
+                            <tr><td>ESPERADO:</td><td style="text-align:right">S/ ${s.expected.toFixed(2)}</td></tr>
+                            <tr><td>REAL:</td><td style="text-align:right">S/ ${(s.real||0).toFixed(2)}</td></tr>
+                            <tr style="color:${s.diff<0?'red':'green'}"><td>DIFERENCIA:</td><td style="text-align:right">S/ ${(s.diff||0).toFixed(2)}</td></tr>
+                        </table>
+                    </div>
+                </div>`;
+            html2pdf().set({margin:10, filename:`Cierre_${s.id}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a5',orientation:'portrait'}}).from(html).save();
         }
 
-        // --- POS ---
-        function scanPOS(v){ const p=db.find(x=>x.id.toString()===v.trim()); if(p){if(p.type==='product'&&p.stock<=0)alert("Sin Stock");else addToCart(p.id);document.getElementById('posSearch').value='';renderPOS();} }
-        function renderCats(){ document.getElementById('catNav').innerHTML=['Todos',...new Set(db.map(p=>p.category||'Var'))].map(c=>`<button class="cat-btn" onclick="renderPOS('${c}',this)">${c}</button>`).join(''); }
+        // --- POS FUNCTIONS ---
+        function scanPOS(v) { const p = db.find(x => x.id.toString() === v.trim()); if(p) { if(p.type === 'product' && p.stock <= 0) alert("Sin Stock"); else addToCart(p.id); document.getElementById('posSearch').value = ''; renderPOS(); } }
+        function renderCats() { document.getElementById('catNav').innerHTML = ['Todos', ...new Set(db.map(p => p.category || 'Var'))].map(c => `<button class="cat-btn" onclick="renderPOS('${c}',this)">${c}</button>`).join(''); }
+        
         function renderPOS(cat='Todos', btn=null) {
-            if(btn){document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-            const q=document.getElementById('posSearch').value.toLowerCase();
-            document.getElementById('posGrid').innerHTML=db.filter(p=>(cat==='Todos'||p.category===cat)&&(p.name.toLowerCase().includes(q)||p.id.toString().includes(q))).map(p=>
-                `<div class="card ${p.type==='product'&&p.stock<=0?'no-stock':''}" onclick="if(${p.type==='service'||p.stock>0}) addToCart(${p.id})">
-                    <div class="badge-stock">${p.type==='service'?'SRV':p.stock}</div>
-                    <div style="font-weight:600;margin-top:5px;font-size:0.9rem;">${p.name}</div>
-                    <div class="price-tag">S/ ${p.price.toFixed(2)}</div>
-                </div>`).join('');
+            if(btn) { document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+            const q = document.getElementById('posSearch').value.toLowerCase();
+            document.getElementById('posGrid').innerHTML = db.filter(p => (cat === 'Todos' || p.category === cat) && (p.name.toLowerCase().includes(q) || p.id.toString().includes(q))).map(p => `
+                <div class="card ${p.type==='product' && p.stock<=0 ? 'no-stock' : ''}" onclick="if(${p.type==='service' || p.stock>0}) addToCart(${p.id})">
+                    <div class="badge-stock">${p.type==='service' ? 'SRV' : p.stock}</div>
+                    <div style="font-weight:600; font-size:0.9rem; margin-top:5px; line-height:1.2;">${p.name}</div>
+                    <div class="card-price">S/ ${p.price.toFixed(2)}</div>
+                </div>
+            `).join('');
         }
-        function addToCart(id){ const p=db.find(x=>x.id===id), i=cart.find(x=>x.id===id); if(p.type==='product'&&i&&i.qty>=p.stock)return alert("Max Stock"); if(i)i.qty++; else cart.push({...p,qty:1}); renderCart(); }
-        function renderCart(){ 
-            let t=0; document.getElementById('cartItems').innerHTML=cart.map(i=>{t+=i.price*i.qty; return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;gap:5px;"><input class="qty-box" type="number" value="${i.qty}" onchange="updQty(${i.id},this.value)"><strong>${(i.price*i.qty).toFixed(2)}</strong><span onclick="updQty(${i.id},0)" style="color:red;cursor:pointer;">×</span></div></div>`}).join('');
-            document.getElementById('cartTotal').innerText=t.toFixed(2);
+
+        function addToCart(id) {
+            const p = db.find(x => x.id === id), i = cart.find(x => x.id === id);
+            if(p.type === 'product' && i && i.qty >= p.stock) return alert("Max Stock");
+            if(i) i.qty++; else cart.push({...p, qty:1});
+            renderCart();
         }
-        function updQty(id,v){ v=parseInt(v); const p=db.find(x=>x.id===id),i=cart.find(x=>x.id===id); if(v<=0)cart=cart.filter(x=>x.id!==id); else {if(p.type==='product'&&v>p.stock)alert("Max Stock"); else i.qty=v;} renderCart(); }
-        function openPayModal(){ if(!cart.length)return alert("Vacío"); document.getElementById('payTotalDisplay').innerText=cart.reduce((a,b)=>a+(b.price*b.qty),0).toFixed(2); document.getElementById('payModal').classList.add('open'); }
-        function closePayModal(){ document.getElementById('payModal').classList.remove('open'); }
-        function confirmSale(m){
-            const act=getActive(); if(!act)return alert("Caja cerrada");
-            const t=cart.reduce((a,b)=>a+(b.price*b.qty),0);
-            act.salesTotal+=t; if(m==='Efectivo')act.salesCash=(act.salesCash||0)+t; if(m==='Yape')act.salesYape=(act.salesYape||0)+t; if(m==='Plin')act.salesPlin=(act.salesPlin||0)+t; if(m==='Tarjeta')act.salesCard=(act.salesCard||0)+t;
-            act.expected = act.init + (act.salesCash||0) + act.moves;
+
+        function renderCart() {
+            let t = 0; let count = 0;
+            document.getElementById('cartItems').innerHTML = cart.map(i => {
+                t += i.price * i.qty; count += i.qty;
+                return `
+                <div class="cart-item">
+                    <div style="flex:1"><div>${i.name}</div><small style="color:#64748b">S/ ${i.price}</small></div>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input class="qty-control" type="number" value="${i.qty}" onchange="updQty(${i.id},this.value)">
+                        <div style="font-weight:bold; width:50px; text-align:right;">${(i.price*i.qty).toFixed(2)}</div>
+                        <span onclick="updQty(${i.id},0)" style="color:red; margin-left:5px;">×</span>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('cartTotal').innerText = t.toFixed(2);
+            document.getElementById('cartCount').innerText = `${count} items`;
+        }
+
+        function updQty(id, v) {
+            v = parseInt(v); const p = db.find(x => x.id === id), i = cart.find(x => x.id === id);
+            if(v <= 0) cart = cart.filter(x => x.id !== id);
+            else { if(p.type === 'product' && v > p.stock) alert("Max Stock"); else i.qty = v; }
+            renderCart();
+        }
+
+        function openPayModal() {
+            if(!cart.length) return alert("Vacío");
+            document.getElementById('payTotalDisplay').innerText = cart.reduce((a, b) => a + (b.price * b.qty), 0).toFixed(2);
+            document.getElementById('payModal').classList.add('open');
+        }
+        function closePayModal() { document.getElementById('payModal').classList.remove('open'); }
+
+        function confirmSale(m) {
+            const act = getActive(); if(!act) return alert("Caja cerrada");
+            const t = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+            
+            act.salesTotal += t;
+            if(m === 'Efectivo') act.salesCash = (act.salesCash || 0) + t;
+            if(m === 'Yape') act.salesYape = (act.salesYape || 0) + t;
+            if(m === 'Plin') act.salesPlin = (act.salesPlin || 0) + t;
+            if(m === 'Tarjeta') act.salesCard = (act.salesCard || 0) + t;
+            act.expected = act.init + (act.salesCash || 0) + act.moves;
+
             const sale = {id:Date.now(), date:new Date().toLocaleDateString(), time:new Date().toLocaleTimeString(), items:[...cart], total:t, method:m};
-            cart.forEach(c=>{ if(c.type==='product'){ const p=db.find(x=>x.id===c.id); p.stock-=c.qty; logKardex(p.id,p.name,'VENTA',-c.qty,p.stock,`Ticket #${sale.id}`); }});
-            sales.push(sale); saveData(); printTicket(sale); cart=[]; renderCart(); renderPOS(); checkCaja(); renderRep(); closePayModal();
+            cart.forEach(c => {
+                if(c.type === 'product') {
+                    const p = db.find(x => x.id === c.id); p.stock -= c.qty;
+                    logKardex(p.id, p.name, 'VENTA', -c.qty, p.stock, `Ticket #${sale.id}`);
+                }
+            });
+            sales.push(sale); saveData(); printTicket(sale); cart = []; renderCart(); renderPOS(); checkCaja(); renderRep(); closePayModal();
         }
 
         // --- INV & KARDEX ---
-        function logKardex(id,n,t,q,s,nt){ kardex.push({date:new Date().toLocaleDateString(), time:new Date().toLocaleTimeString(), id, name:n, type:t, qty:q, stock:s, note:nt}); saveData(); }
-        function scanStk(v){ const p=db.find(x=>x.id.toString()===v.trim()); if(p){stockSel=p;document.getElementById('stkPreview').innerText=`${p.name} (${p.stock})`;document.getElementById('stkQty').focus();}else alert("No existe"); }
-        function stockIn(){ const q=parseInt(document.getElementById('stkQty').value); if(stockSel&&q>0&&stockSel.type==='product'){ stockSel.stock+=q; logKardex(stockSel.id,stockSel.name,'INGRESO',q,stockSel.stock,'Manual'); saveData(); renderInv(); alert("Stock +"); } stockSel=null; document.getElementById('stkScan').value=''; document.getElementById('stkQty').value=''; }
-        function addProd(){
-            const id=document.getElementById('nId').value, name=document.getElementById('nName').value, pr=parseFloat(document.getElementById('nPrice').value);
-            if(name&&pr){ db.push({id:id||Date.now(), name, price:pr, stock:parseInt(document.getElementById('nStock').value)||0, category:document.getElementById('nCat').value||'Var', type:document.getElementById('nType').value});
-            logKardex(id,name,'CREACION',parseInt(document.getElementById('nStock').value)||0,parseInt(document.getElementById('nStock').value)||0,'Nuevo'); saveData(); renderInv(); }
+        function logKardex(id, n, t, q, s, nt) { kardex.push({date:new Date().toLocaleDateString(), time:new Date().toLocaleTimeString(), id, name:n, type:t, qty:q, stock:s, note:nt}); saveData(); }
+        function scanStk(v) { const p = db.find(x => x.id.toString() === v.trim()); if(p) { stockSel = p; document.getElementById('stkPreview').innerText = `${p.name} (${p.stock})`; document.getElementById('stkQty').focus(); } else alert("No existe"); }
+        function stockIn() { const q = parseInt(document.getElementById('stkQty').value); if(stockSel && q > 0 && stockSel.type === 'product') { stockSel.stock += q; logKardex(stockSel.id, stockSel.name, 'INGRESO', q, stockSel.stock, 'Manual'); saveData(); renderInv(); alert("Stock +"); } stockSel = null; document.getElementById('stkScan').value = ''; document.getElementById('stkQty').value = ''; }
+        
+        function addProd() {
+            const id = document.getElementById('nId').value, name = document.getElementById('nName').value, pr = parseFloat(document.getElementById('nPrice').value);
+            if(name && pr) {
+                db.push({id:id || Date.now(), name, price:pr, stock:parseInt(document.getElementById('nStock').value) || 0, category:document.getElementById('nCat').value || 'Var', type:document.getElementById('nType').value});
+                logKardex(id, name, 'CREACION', parseInt(document.getElementById('nStock').value) || 0, parseInt(document.getElementById('nStock').value) || 0, 'Nuevo');
+                saveData(); renderInv();
+            }
         }
-        function renderInv(){ document.getElementById('tInv').innerHTML=db.map(p=>`<tr><td>${p.id}</td><td>${p.name}</td><td>${p.category}</td><td>${p.price}</td><td>${p.type==='service'?'-':p.stock}</td><td><button onclick="delProd(${p.id})">X</button></td></tr>`).join(''); document.getElementById('lCats').innerHTML=[...new Set(db.map(p=>p.category))].map(c=>`<option value="${c}">`).join(''); }
-        function delProd(id){ if(confirm("Eliminar?")){ const p=db.find(x=>x.id===id); logKardex(p.id,p.name,'ELIMINACION',-p.stock,0,'Borrado'); db=db.filter(x=>x.id!==id); saveData(); renderInv(); } }
-        function renderKardex(){ 
-            const q=document.getElementById('auditSearch').value.toLowerCase();
-            document.getElementById('tAudit').innerHTML=[...kardex].reverse().filter(k=>k.name.toLowerCase().includes(q)).map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td style="color:${k.qty>0?'green':'red'}">${k.qty}</td><td>${k.stock}</td><td>${k.note}</td></tr>`).join('');
+        
+        function renderInv() {
+            document.getElementById('tInv').innerHTML = db.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${p.category}</td><td>${p.price}</td><td>${p.type==='service'?'-':p.stock}</td><td><button class="btn-sm" style="background:#dc2626" onclick="delProd(${p.id})">×</button></td></tr>`).join('');
+            document.getElementById('lCats').innerHTML = [...new Set(db.map(p => p.category))].map(c => `<option value="${c}">`).join('');
         }
-        function renderRep(){ document.getElementById('tRep').innerHTML=[...sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date} ${s.time}</td><td>${s.method}</td><td>${s.total.toFixed(2)}</td><td><button class="btn-sm" style="background:#2563eb" onclick='showDet(${JSON.stringify(s)})'>Ver</button></td></tr>`).join(''); }
-        function showDet(s){ document.getElementById('detBody').innerHTML=s.items.map(i=>`<div>${i.qty} ${i.name} ${i.price*i.qty}</div>`).join('')+`<hr>Tot:${s.total}<br>Met:${s.method}<br><button onclick='printTicket(${JSON.stringify(s)})' class='btn-primary' style='margin-top:10px'>Imprimir</button>`; document.getElementById('detModal').classList.add('open'); }
+        function delProd(id) { if(confirm("Eliminar?")) { const p = db.find(x => x.id === id); logKardex(p.id, p.name, 'ELIMINACION', -p.stock, 0, 'Borrado'); db = db.filter(x => x.id !== id); saveData(); renderInv(); } }
+        
+        function renderKardex() {
+            const q = document.getElementById('auditSearch').value.toLowerCase();
+            document.getElementById('tAudit').innerHTML = [...kardex].reverse().filter(k => k.name.toLowerCase().includes(q)).map(k => 
+                `<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td style="color:${k.qty>0?'green':'red'}">${k.qty}</td><td>${k.stock}</td><td>${k.note}</td></tr>`
+            ).join('');
+        }
 
-        function saveData(){ localStorage.setItem('pos_db_v16',JSON.stringify(db)); localStorage.setItem('pos_sales_v16',JSON.stringify(sales)); localStorage.setItem('pos_sessions_v16',JSON.stringify(sessions)); localStorage.setItem('pos_kardex_v16',JSON.stringify(kardex)); }
-        function printTicket(s){ document.getElementById('print-area').innerHTML=`<div style="width:250px;font-family:monospace;font-size:12px;"><h3>MARKET</h3>#${s.id}<br>${s.date} ${s.time}<hr>${s.items.map(i=>`<div style="display:flex;justify-content:space-between"><span>${i.qty} ${i.name}</span><span>${(i.price*i.qty).toFixed(2)}</span></div>`).join('')}<hr><h3 style="text-align:right">S/ ${s.total.toFixed(2)}</h3>Met: ${s.method}<br>Gracias por su compra</div>`; window.print(); }
+        function renderRep() { document.getElementById('tRep').innerHTML = [...sales].reverse().map(s => `<tr><td>${s.id}</td><td>${s.date} ${s.time}</td><td>${s.method}</td><td>${s.total.toFixed(2)}</td><td><button class="btn-sm" style="background:#2563eb" onclick='showDet(${JSON.stringify(s)})'>Ver</button></td></tr>`).join(''); }
+        function showDet(s) { document.getElementById('detBody').innerHTML = s.items.map(i => `<div>${i.qty} ${i.name} ${i.price*i.qty}</div>`).join('') + `<hr>Tot:${s.total}<br>Met:${s.method}<br><button onclick='printTicket(${JSON.stringify(s)})' class='btn-primary' style='margin-top:10px'>Imprimir</button>`; document.getElementById('detModal').classList.add('open'); }
 
+        function saveData() { localStorage.setItem('pos_db_v17', JSON.stringify(db)); localStorage.setItem('pos_sales_v17', JSON.stringify(sales)); localStorage.setItem('pos_sessions_v17', JSON.stringify(sessions)); localStorage.setItem('pos_kardex_v17', JSON.stringify(kardex)); }
+        
+        function printTicket(s) {
+            document.getElementById('print-area').innerHTML = `
+                <div style="width:250px;font-family:monospace;font-size:12px;">
+                    <h3 style="text-align:center;margin:0;">MARKET</h3>
+                    <p style="text-align:center;margin:5px 0;">Ticket #${s.id}<br>${s.date} ${s.time}</p>
+                    <hr style="border:1px dashed #000;">
+                    ${s.items.map(i => `<div style="display:flex;justify-content:space-between"><span>${i.qty} ${i.name}</span><span>${(i.price*i.qty).toFixed(2)}</span></div>`).join('')}
+                    <hr style="border:1px dashed #000;">
+                    <div style="display:flex;justify-content:space-between;font-weight:bold;"><span>TOTAL</span><span>S/ ${s.total.toFixed(2)}</span></div>
+                    <div style="text-align:center;margin-top:5px;">Pago: ${s.method}</div>
+                    <p style="text-align:center;margin-top:10px;">¡Gracias por su compra!</p>
+                </div>`;
+            window.print();
+        }
     </script>
 </body>
 </html>
