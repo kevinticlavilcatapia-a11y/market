@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Market POS v25: Login Pro & Edición</title>
+    <title>Market POS v26: Gestión Usuarios Pro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
         :root {
-            --primary: #2563eb; /* Azul Corporativo */
+            --primary: #2563eb;
             --bg: #f8fafc;
             --surface: #ffffff;
             --text: #0f172a;
@@ -24,35 +24,20 @@
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; display: flex; }
 
-        /* --- LOGIN PRO --- */
+        /* LOGIN */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
-            /* Imagen de fondo de Supermercado */
             background: url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
             display: flex; align-items: center; justify-content: center;
         }
-        /* Capa oscura sobre la imagen */
-        #login-screen::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px);
-        }
-        .login-card {
-            position: relative;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 2.5rem; border-radius: 1rem; width: 90%; max-width: 380px;
-            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        }
-        .login-title { font-size: 1.8rem; font-weight: 900; color: var(--primary); margin-bottom: 5px; letter-spacing: -1px; }
-        .login-subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 25px; }
-        .login-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; transition: 0.2s; }
-        .login-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); }
-        .login-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
-        .login-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+        #login-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px); }
+        .login-card { position: relative; background: rgba(255, 255, 255, 0.95); padding: 2.5rem; border-radius: 1rem; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .login-title { font-size: 1.8rem; font-weight: 900; color: var(--primary); margin-bottom: 5px; }
+        .login-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        .login-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
 
-        /* --- LAYOUT APP --- */
+        /* APP LAYOUT */
         #app-layout { display: none; width: 100%; height: 100%; }
-        
-        /* Sidebar */
         .sidebar { width: 80px; background: #0f172a; display: flex; flex-direction: column; align-items: center; padding-top: 20px; z-index: 100; }
         .nav-btn { width: 60px; height: 60px; margin-bottom: 10px; background: transparent; border: none; color: #94a3b8; cursor: pointer; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; }
         .nav-btn i { font-size: 24px; font-style: normal; margin-bottom: 4px; }
@@ -71,25 +56,17 @@
         .main-content.active { display: flex; }
         .header { height: 55px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
         .title { font-size: 1.25rem; font-weight: 800; color: var(--text); }
-        
-        /* Badges */
         .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
         .badge.open { background: #dcfce7; color: #166534; }
         .badge.closed { background: #fee2e2; color: #991b1b; }
 
-        /* POS UI */
+        /* UI ELEMENTS */
         .pos-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .products-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .cart-area { width: 380px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; }
         .pos-locked-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 900; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .pos-locked-overlay.active { display: flex; }
-
         @media (max-width: 768px) { .main-content { height: calc(100vh - var(--nav-height)); } .pos-container { flex-direction: column; } .products-area { height: 60%; } .cart-area { width: 100%; height: 40%; border-left: none; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); } }
-
-        /* Components */
-        .search-wrapper { display: flex; gap: 10px; }
-        .search-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; }
-        .btn-scan { background: var(--text); color: white; border: none; border-radius: 8px; width: 50px; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
         .card { background: white; padding: 10px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
@@ -101,8 +78,7 @@
         .cart-list { flex: 1; overflow-y: auto; padding: 10px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); }
         .cart-footer { padding: 15px; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
-        
-        /* Botones & Inputs Generales */
+
         .page-content { padding: 20px; overflow-y: auto; height: 100%; }
         .card-box { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; }
         .input-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
@@ -115,7 +91,7 @@
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         th { background: #f8fafc; font-weight: 600; color: #64748b; }
 
-        /* Modals */
+        /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-overlay.open { display: flex; }
         .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -131,7 +107,7 @@
     <div id="login-screen">
         <div class="login-card">
             <div class="login-title">MARKET POS</div>
-            <div class="login-subtitle">Sistema de Gestión de Ventas</div>
+            <div class="login-subtitle">Sistema de Ventas</div>
             <input type="text" id="user" class="login-input" placeholder="Usuario">
             <input type="password" id="pass" class="login-input" placeholder="Contraseña">
             <button class="login-btn" onclick="app.login()">INICIAR SESIÓN</button>
@@ -150,9 +126,9 @@
                     <button class="btn-primary" onclick="app.nav('caja')">IR A CAJA</button>
                 </div>
                 <div class="products-area">
-                    <div class="search-wrapper">
-                        <input type="text" id="search" class="search-input" placeholder="🔍 Buscar nombre o código..." onkeyup="app.renderPOS()">
-                        <button class="btn-scan" onclick="app.startScanner('pos')">📷</button>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="search" class="input-control" placeholder="🔍 Buscar..." onkeyup="app.renderPOS()" style="margin:0;">
+                        <button class="btn-primary" style="padding:10px; width:50px;" onclick="app.startScanner('pos')">📷</button>
                     </div>
                     <div class="grid" id="posGrid" style="margin-top: 15px;"></div>
                 </div>
@@ -209,7 +185,7 @@
                         <div style="flex:1;"><label style="font-size:0.8rem; font-weight:bold;">Nuevo Producto</label>
                             <div style="display:flex; gap:5px;">
                                 <input id="pId" placeholder="Código" class="input-control" style="margin:0;">
-                                <button class="btn-scan" style="width:40px; height:42px;" onclick="app.startScanner('new')">📷</button>
+                                <button class="btn-primary" style="padding:10px;" onclick="app.startScanner('new')">📷</button>
                             </div>
                         </div>
                         <input id="pName" placeholder="Nombre" class="input-control" style="flex:1; margin:0;">
@@ -228,7 +204,7 @@
             <div class="header"><span class="title">Configuración</span></div>
             <div class="page-content">
                 <div class="card-box">
-                    <h4>Roles y Permisos</h4>
+                    <h4>Roles</h4>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <input id="newRoleName" class="input-control" placeholder="Nombre Rol" style="margin:0;">
                         <button class="btn-primary" onclick="app.addRole()">Crear Rol</button>
@@ -242,13 +218,13 @@
                         <label><input type="checkbox" class="chk-perm" value="conf">Config</label>
                     </div>
                     <div id="rolesList" style="margin-bottom:20px;"></div>
-                    
+                    <hr>
                     <h4>Usuarios</h4>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <input id="uUser" class="input-control" placeholder="Usuario" style="flex:1;">
                         <input id="uPass" class="input-control" placeholder="Clave" style="width:120px;">
                         <select id="uRole" class="input-control" style="width:150px;"></select>
-                        <button class="btn-primary" onclick="app.addUser()">Crear Usuario</button>
+                        <button class="btn-primary" onclick="app.addUser()">Crear</button>
                     </div>
                     <div class="table-wrap">
                         <table><thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead><tbody id="usersTable"></tbody></table>
@@ -256,7 +232,7 @@
                 </div>
             </div>
         </section>
-
+        
         <section id="audit" class="main-content"><div class="header"><span class="title">Kardex</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Stk</th><th>Usr</th></tr></thead><tbody id="auditTable"></tbody></table></div></div></section>
         <section id="rep" class="main-content"><div class="header"><span class="title">Reportes</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Pago</th></tr></thead><tbody id="repTable"></tbody></table></div></div></section>
     </div>
@@ -270,8 +246,25 @@
                 <label>Nombre</label><input id="editName" class="input-control">
                 <label>Precio</label><input id="editPrice" type="number" class="input-control">
                 <label>Stock</label><input id="editStock" type="number" class="input-control">
-                <label>Stock Mínimo</label><input id="editMin" type="number" class="input-control">
-                <button class="btn-primary" style="width:100%" onclick="app.updateProd()">GUARDAR CAMBIOS</button>
+                <label>Min</label><input id="editMin" type="number" class="input-control">
+                <button class="btn-primary" style="width:100%" onclick="app.updateProd()">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="document.getElementById('editUserModal').classList.remove('open')">✕</span>
+            <div style="padding:20px;">
+                <h3>Editar Usuario</h3>
+                <input type="hidden" id="editUserId">
+                <label>Usuario</label>
+                <input id="editUserUser" class="input-control" readonly style="background:#f1f5f9;">
+                <label>Contraseña (Dejar vacío para no cambiar)</label>
+                <input id="editUserPass" class="input-control" placeholder="Nueva Contraseña">
+                <label>Rol</label>
+                <select id="editUserRole" class="input-control"></select>
+                <button class="btn-primary" style="width:100%" onclick="app.saveUserEdit()">ACTUALIZAR</button>
             </div>
         </div>
     </div>
@@ -303,12 +296,12 @@
     <script>
         const app = {
             data: {
-                roles: JSON.parse(localStorage.getItem('pos_roles_v25')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep','audit']},{id:2, name:'Cajero', perms:['pos','caja']}],
-                users: JSON.parse(localStorage.getItem('pos_users_v25')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
-                db: JSON.parse(localStorage.getItem('pos_db_v25')) || [{id:101, name:"Agua 500ml", price:1.5, stock:50, min:10, type:'product'}],
-                sales: JSON.parse(localStorage.getItem('pos_sales_v25')) || [],
-                sessions: JSON.parse(localStorage.getItem('pos_sessions_v25')) || [],
-                kardex: JSON.parse(localStorage.getItem('pos_kardex_v25')) || [],
+                roles: JSON.parse(localStorage.getItem('pos_roles_v26')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep','audit']},{id:2, name:'Cajero', perms:['pos','caja']}],
+                users: JSON.parse(localStorage.getItem('pos_users_v26')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
+                db: JSON.parse(localStorage.getItem('pos_db_v26')) || [{id:101, name:"Agua 500ml", price:1.5, stock:50, min:10, type:'product'}],
+                sales: JSON.parse(localStorage.getItem('pos_sales_v26')) || [],
+                sessions: JSON.parse(localStorage.getItem('pos_sessions_v26')) || [],
+                kardex: JSON.parse(localStorage.getItem('pos_kardex_v26')) || [],
                 cart: [], currentUser: null, scanner: null
             },
 
@@ -363,7 +356,7 @@
                 app.renderCart();
             },
             renderCart: () => {
-                let t=0; document.getElementById('cartList').innerHTML=app.data.cart.map(i=>{ t+=i.price*i.qty; return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;gap:5px;"><b>${i.qty}</b><button class="btn-danger" style="padding:2px 6px" onclick="app.remCart(${i.id})">x</button></div></div>`}).join('');
+                let t=0; document.getElementById('cartList').innerHTML=app.data.cart.map(i=>{ t+=i.price*i.qty; return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;align-items:center;gap:5px;"><b>${i.qty}</b><button class="btn-danger" style="padding:2px 6px" onclick="app.remCart(${i.id})">x</button></div></div>`}).join('');
                 document.getElementById('cartTotal').innerText=t.toFixed(2);
                 document.getElementById('btnCheckout').disabled=app.data.cart.length===0;
             },
@@ -380,7 +373,7 @@
                 alert('Venta realizada');
             },
 
-            // --- INVENTORY EDIT & CREATE ---
+            // --- INVENTORY ---
             toggleStockInputs: () => {
                 const s = document.getElementById('pType').value === 'service';
                 document.getElementById('pStock').disabled = s; document.getElementById('pMin').disabled = s;
@@ -403,8 +396,7 @@
                 `).join('');
             },
             openEdit: (id) => {
-                const p = app.data.db.find(x => x.id == id);
-                if(!p) return;
+                const p = app.data.db.find(x => x.id == id); if(!p) return;
                 document.getElementById('editId').value = p.id;
                 document.getElementById('editName').value = p.name;
                 document.getElementById('editPrice').value = p.price;
@@ -433,7 +425,7 @@
             renderConfig: () => {
                 document.getElementById('rolesList').innerHTML = app.data.roles.map(r => `<span class="role-badge" style="background:#e0e7ff;margin:2px;padding:3px;border-radius:4px;">${r.name}</span>`).join('');
                 document.getElementById('uRole').innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                document.getElementById('usersTable').innerHTML = app.data.users.map(u => `<tr><td>${u.user}</td><td>${app.data.roles.find(r=>r.id==u.roleId)?.name}</td><td>${u.id>1?`<button class="btn-danger" onclick="app.delUser(${u.id})">✕</button>`:'-'}</td></tr>`).join('');
+                document.getElementById('usersTable').innerHTML = app.data.users.map(u => `<tr><td>${u.user}</td><td>${app.data.roles.find(r=>r.id==u.roleId)?.name}</td><td><button class="btn-edit" onclick="app.openEditUser(${u.id})">✏️</button>${u.id>1?`<button class="btn-danger" onclick="app.delUser(${u.id})">✕</button>`:''}</td></tr>`).join('');
             },
             addRole: () => {
                 const n = document.getElementById('newRoleName').value;
@@ -445,14 +437,44 @@
                 if(u && p) { app.data.users.push({id:Date.now(), user:u, pass:p, roleId:r}); app.save(); app.renderConfig(); }
             },
             delUser: (id) => { if(confirm('¿Eliminar usuario?')){ app.data.users = app.data.users.filter(u => u.id != id); app.save(); app.renderConfig(); } },
-
-            // --- COMMON & UTILS ---
-            updateBoxState: () => {
-                const act = app.data.sessions.find(s=>s.status=='open');
-                const lock = document.getElementById('posLock'); const badge = document.getElementById('posStatus');
-                if(act) { lock.classList.remove('active'); badge.innerText='Abierto'; badge.className='badge open'; }
-                else { lock.classList.add('active'); badge.innerText='Cerrado'; badge.className='badge closed'; }
+            
+            // Edit User Logic
+            openEditUser: (id) => {
+                const u = app.data.users.find(x => x.id == id); if(!u) return;
+                document.getElementById('editUserId').value = u.id;
+                document.getElementById('editUserUser').value = u.user;
+                document.getElementById('editUserPass').value = ''; // Clean pass field
+                const roleSel = document.getElementById('editUserRole');
+                roleSel.innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                roleSel.value = u.roleId;
+                
+                // Security Rule: Disable role change for Root Admin
+                roleSel.disabled = (u.id == 1);
+                
+                document.getElementById('editUserModal').classList.add('open');
             },
+            saveUserEdit: () => {
+                const id = document.getElementById('editUserId').value;
+                const u = app.data.users.find(x => x.id == id);
+                
+                // Security Check: Only Root Admin can edit Root Admin
+                if(id == 1 && app.data.currentUser.id != 1) {
+                    alert("Acceso Denegado: Solo el Administrador Principal puede editar su cuenta.");
+                    return;
+                }
+
+                if(u) {
+                    const newPass = document.getElementById('editUserPass').value;
+                    if(newPass) u.pass = newPass; // Only update if typed
+                    u.roleId = document.getElementById('editUserRole').value;
+                    app.save(); app.renderConfig();
+                    document.getElementById('editUserModal').classList.remove('open');
+                    alert("Usuario actualizado");
+                }
+            },
+
+            // --- COMMON ---
+            updateBoxState: () => { const act = app.data.sessions.find(s=>s.status=='open'); const l = document.getElementById('posLock'); const b = document.getElementById('posStatus'); if(act) { l.classList.remove('active'); b.innerText='Abierto'; b.className='badge open'; } else { l.classList.add('active'); b.innerText='Cerrado'; b.className='badge closed'; } },
             openBox: () => { const v=parseFloat(document.getElementById('initCash').value); if(isNaN(v))return; app.data.sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,salesCash:0,moves:0,expected:v,status:'open',movements:[]}); app.save(); app.checkBox(); app.nav('pos'); },
             checkBox: () => {
                 const act = app.data.sessions.find(s=>s.status=='open');
@@ -474,9 +496,9 @@
             renderKardex: () => document.getElementById('auditTable').innerHTML=[...app.data.kardex].reverse().map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td>${k.qty}</td><td>${k.stock}</td><td>${k.usr}</td></tr>`).join(''),
             renderRep: () => document.getElementById('repTable').innerHTML=[...app.data.sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''),
             save: () => {
-                localStorage.setItem('pos_db_v25',JSON.stringify(app.data.db)); localStorage.setItem('pos_sales_v25',JSON.stringify(app.data.sales));
-                localStorage.setItem('pos_sessions_v25',JSON.stringify(app.data.sessions)); localStorage.setItem('pos_users_v25',JSON.stringify(app.data.users));
-                localStorage.setItem('pos_roles_v25',JSON.stringify(app.data.roles)); localStorage.setItem('pos_kardex_v25',JSON.stringify(app.data.kardex));
+                localStorage.setItem('pos_db_v26',JSON.stringify(app.data.db)); localStorage.setItem('pos_sales_v26',JSON.stringify(app.data.sales));
+                localStorage.setItem('pos_sessions_v26',JSON.stringify(app.data.sessions)); localStorage.setItem('pos_users_v26',JSON.stringify(app.data.users));
+                localStorage.setItem('pos_roles_v26',JSON.stringify(app.data.roles)); localStorage.setItem('pos_kardex_v26',JSON.stringify(app.data.kardex));
             }
         };
         
