@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Market POS v22: Cam Scanner & Users</title>
+    <title>Market POS v23: Flujo Caja Corregido</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -52,18 +52,29 @@
         .badge.open { background: #dcfce7; color: #166534; }
         .badge.closed { background: #fee2e2; color: #991b1b; }
 
-        /* POS */
-        .pos-container { display: flex; flex: 1; overflow: hidden; }
+        /* POS & BLOCKED STATE */
+        .pos-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .products-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .cart-area { width: 380px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; }
+        
+        /* BLOQUEO VISUAL DE POS */
+        .pos-locked-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 900;
+            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
+        .pos-locked-overlay.active { display: flex; }
+        .lock-icon { font-size: 4rem; margin-bottom: 10px; }
+
         @media (max-width: 768px) { .main-content { height: calc(100vh - var(--nav-height)); } .pos-container { flex-direction: column; } .products-area { height: 60%; } .cart-area { width: 100%; height: 40%; border-left: none; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); } }
 
+        /* UI Elements */
         .search-wrapper { display: flex; gap: 10px; }
         .search-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; }
         .btn-scan { background: var(--text); color: white; border: none; border-radius: 8px; width: 50px; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .card { background: white; padding: 10px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card { background: white; padding: 10px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
         .card:active { border-color: var(--primary); transform: scale(0.98); }
         .card.no-stock { opacity: 0.6; pointer-events: none; background: #f1f5f9; }
         .badge-stock { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
@@ -74,15 +85,12 @@
         .btn-pay { width: 100%; background: var(--success); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; }
 
-        /* GENERAL */
         .page-content { padding: 20px; overflow-y: auto; height: 100%; }
         .card-box { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; }
         .input-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
         .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-danger { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .btn-edit { background: var(--warning); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; }
 
-        /* TABLES */
         .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; background: white; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
@@ -99,7 +107,6 @@
         .modal-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; z-index: 10; }
         
         #scanner-container { width: 100%; height: 300px; background: black; }
-
         #print-area { display: none; }
         @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; } }
     </style>
@@ -109,9 +116,13 @@
     <div id="login-screen">
         <div class="login-card">
             <h2 style="color: var(--primary); margin-bottom: 20px;">MARKET POS</h2>
-            <input type="text" id="user" class="login-input" placeholder="Usuario (admin)">
-            <input type="password" id="pass" class="login-input" placeholder="Contraseña (1234)">
+            <input type="text" id="user" class="login-input" placeholder="Usuario">
+            <input type="password" id="pass" class="login-input" placeholder="Contraseña">
             <button class="login-btn" onclick="app.login()">INGRESAR</button>
+            <p style="margin-top:15px; font-size:0.8rem; color:#64748b">
+                Demo Admin: admin / 1234<br>
+                Demo Cajero: cajero / 1234
+            </p>
         </div>
     </div>
 
@@ -124,6 +135,13 @@
                 <span class="badge closed" id="posStatus">Cerrado</span>
             </div>
             <div class="pos-container">
+                <div id="posLock" class="pos-locked-overlay">
+                    <div class="lock-icon">🔒</div>
+                    <h3>Caja Cerrada</h3>
+                    <p>Debes abrir turno para realizar ventas.</p>
+                    <button class="btn-primary" onclick="app.nav('caja')">IR A ABRIR CAJA</button>
+                </div>
+
                 <div class="products-area">
                     <div class="search-wrapper">
                         <input type="text" id="search" class="search-input" placeholder="🔍 Buscar nombre o código..." onkeyup="app.renderPOS()">
@@ -149,13 +167,14 @@
             <div class="page-content">
                 <div id="viewClosed" class="card-box" style="text-align:center;">
                     <h3>🔐 Abrir Turno</h3>
-                    <input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial (S/)">
-                    <button class="btn-primary" style="width:100%" onclick="app.openBox()">ABRIR CAJA</button>
+                    <p style="color:#64748b; margin-bottom:15px;">Ingresa el dinero base para iniciar ventas.</p>
+                    <input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial (S/)" value="">
+                    <button class="btn-primary" style="width:100%" onclick="app.openBox()">ABRIR CAJA E INICIAR</button>
                 </div>
                 <div id="viewOpen" style="display:none;">
                     <div class="card-box" style="background:#f0fdfa; border-color:var(--success);">
                         <h2 style="text-align:center; color:var(--success); margin:0;">S/ <span id="lblCash">0.00</span></h2>
-                        <p style="text-align:center; margin:0; color:#64748b;">En Caja</p>
+                        <p style="text-align:center; margin:0; color:#64748b;">Efectivo en Cajón</p>
                     </div>
                     <div class="card-box">
                         <h4>Movimientos</h4>
@@ -175,6 +194,8 @@
                         </div>
                     </div>
                 </div>
+                <h3>Historial</h3>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Inicio</th><th>Ventas</th><th>Dif.</th><th>PDF</th></tr></thead><tbody id="boxHistory"></tbody></table></div>
             </div>
         </section>
 
@@ -259,35 +280,48 @@
     <script>
         const app = {
             data: {
-                // Estructura: {id, name, perms:[]}
-                roles: JSON.parse(localStorage.getItem('pos_roles_v22')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep']},{id:2, name:'Cajero', perms:['pos','caja']}],
-                // Estructura: {id, user, pass, roleId}
-                users: JSON.parse(localStorage.getItem('pos_users_v22')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
-                db: JSON.parse(localStorage.getItem('pos_db_v22')) || [],
-                sales: JSON.parse(localStorage.getItem('pos_sales_v22')) || [],
-                sessions: JSON.parse(localStorage.getItem('pos_sessions_v22')) || [],
+                roles: JSON.parse(localStorage.getItem('pos_roles_v23')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep']},{id:2, name:'Cajero', perms:['pos','caja']}],
+                users: JSON.parse(localStorage.getItem('pos_users_v23')) || [{id:1, user:'admin', pass:'1234', roleId:1}, {id:2, user:'cajero', pass:'1234', roleId:2}],
+                db: JSON.parse(localStorage.getItem('pos_db_v23')) || [],
+                sales: JSON.parse(localStorage.getItem('pos_sales_v23')) || [],
+                sessions: JSON.parse(localStorage.getItem('pos_sessions_v23')) || [],
                 cart: [],
                 currentUser: null,
                 html5QrcodeScanner: null
             },
 
-            // --- AUTH ---
+            // --- AUTH & FLOW ---
             login: () => {
                 const u = document.getElementById('user').value;
                 const p = document.getElementById('pass').value;
                 const user = app.data.users.find(x => x.user === u && x.pass === p);
+                
                 if (user) {
                     app.data.currentUser = user;
+                    const role = app.data.roles.find(r => r.id == user.roleId);
+                    
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-layout').style.display = 'flex';
-                    app.buildMenu();
+                    app.buildMenu(role);
+
+                    // LÓGICA DE REDIRECCIÓN INTELIGENTE
+                    const activeSession = app.data.sessions.find(s => s.status === 'open');
+                    
+                    // Si es cajero y no hay caja abierta, forzar ir a Caja
+                    if (!activeSession && role.name === 'Cajero') {
+                        app.nav('caja');
+                    } else {
+                        // Si hay caja abierta o es admin, ir al primer módulo disponible (usualmente POS)
+                        app.nav(role.perms[0]);
+                    }
+                    
+                    // Inicializar estado visual de caja
+                    app.updateGlobalBoxState();
+
                 } else alert("Error");
             },
 
-            buildMenu: () => {
-                const role = app.data.roles.find(r => r.id == app.data.currentUser.roleId);
-                if(!role) return alert("Rol no encontrado");
-                
+            buildMenu: (role) => {
                 const menu = document.getElementById('mainNav'); menu.innerHTML = '';
                 const allMods = [
                     {id:'pos', i:'🛒', l:'Ventas'},
@@ -297,10 +331,8 @@
                     {id:'conf', i:'⚙️', l:'Config'}
                 ];
 
-                let first = null;
                 allMods.forEach(m => {
                     if (role.perms.includes(m.id)) {
-                        if(!first) first = m.id;
                         const btn = document.createElement('button');
                         btn.className = 'nav-btn';
                         btn.onclick = () => app.nav(m.id);
@@ -315,8 +347,6 @@
                 out.innerHTML = `<i>🚪</i><span>Salir</span>`;
                 out.onclick = () => location.reload();
                 menu.appendChild(out);
-
-                if(first) app.nav(first);
             },
 
             nav: (id) => {
@@ -325,42 +355,97 @@
                 const target = document.getElementById(id);
                 if(target) target.classList.add('active');
                 
-                // Highlight button
                 const btns = document.querySelectorAll('.nav-btn');
                 btns.forEach(b => { if(b.innerHTML.includes(id=='pos'?'Ventas':id=='caja'?'Caja':id=='inv'?'Stock':id=='conf'?'Config':'Rep')) b.classList.add('active'); });
 
-                if(id=='pos') app.renderPOS();
+                if(id=='pos') { app.renderPOS(); app.updateGlobalBoxState(); }
                 if(id=='caja') app.checkBox();
                 if(id=='inv') app.renderInv();
                 if(id=='conf') app.renderConfig();
                 if(id=='rep') app.renderRep();
             },
 
-            // --- CAMERA SCANNER ---
-            startScanner: () => {
-                document.getElementById('scanModal').classList.add('open');
-                app.html5QrcodeScanner = new Html5QrcodeScanner("scanner-container", { fps: 10, qrbox: 250 });
-                app.html5QrcodeScanner.render(app.onScanSuccess);
-            },
-            onScanSuccess: (decodedText) => {
-                app.stopScanner();
-                const p = app.data.db.find(x => x.id == decodedText);
-                if (p) {
-                    app.addToCart(p.id);
-                    alert(`Agregado: ${p.name}`);
+            // --- BOX LOGIC ---
+            updateGlobalBoxState: () => {
+                const act = app.data.sessions.find(s => s.status === 'open');
+                const badge = document.getElementById('posStatus');
+                const lock = document.getElementById('posLock');
+                const btnPay = document.getElementById('btnCheckout');
+
+                if (act) {
+                    badge.className = 'badge open';
+                    badge.innerText = 'Abierto';
+                    lock.classList.remove('active'); // Quitar candado
+                    btnPay.disabled = app.data.cart.length === 0;
                 } else {
-                    if(confirm(`Producto ${decodedText} no existe. ¿Crearlo?`)) {
-                        app.nav('inv');
-                        document.getElementById('pId').value = decodedText;
-                    }
+                    badge.className = 'badge closed';
+                    badge.innerText = 'Cerrado';
+                    lock.classList.add('active'); // Mostrar candado
+                    btnPay.disabled = true;
                 }
             },
-            stopScanner: () => {
-                if(app.html5QrcodeScanner) app.html5QrcodeScanner.clear();
-                document.getElementById('scanModal').classList.remove('open');
+
+            openBox: () => {
+                const v = parseFloat(document.getElementById('initCash').value);
+                if (isNaN(v)) return alert("Ingrese monto inicial");
+                
+                app.data.sessions.push({
+                    id: Date.now(), start: new Date(), end: null,
+                    init: v, salesTotal: 0, salesCash: 0, salesYape: 0, salesPlin: 0, salesCard: 0,
+                    moves: 0, expected: v, real: 0, diff: 0, status: 'open', movements: []
+                });
+                
+                app.save();
+                app.checkBox();
+                app.updateGlobalBoxState();
+                
+                // REDIRECCIÓN AUTOMÁTICA A VENTAS AL ABRIR
+                alert("✅ Caja Abierta. Redirigiendo a Ventas...");
+                app.nav('pos');
             },
 
-            // --- POS LOGIC ---
+            checkBox: () => {
+                const act = app.data.sessions.find(s => s.status === 'open');
+                const status = act ? 'Abierto' : 'Cerrado';
+                const cls = act ? 'open' : 'closed';
+                
+                document.getElementById('cajaStatus').innerText = status;
+                document.getElementById('cajaStatus').className = 'badge ' + cls;
+                
+                document.getElementById('viewClosed').style.display = act ? 'none' : 'block';
+                document.getElementById('viewOpen').style.display = act ? 'block' : 'none';
+
+                if (act) {
+                    document.getElementById('lblCash').innerText = act.expected.toFixed(2);
+                    document.getElementById('movList').innerHTML = (act.movements || []).map(m => `<div>${m.desc}: ${m.amount}</div>`).join('');
+                }
+                
+                document.getElementById('boxHistory').innerHTML = [...app.data.sessions].reverse().map(s => 
+                    `<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.salesTotal.toFixed(2)}</td><td>${s.diff || '-'}</td><td>PDF</td></tr>`
+                ).join('');
+            },
+
+            addMove: () => {
+                const act = app.data.sessions.find(s => s.status === 'open'); if(!act) return;
+                const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value);
+                if(!d || isNaN(a)) return;
+                const val = t === 'in' ? a : -a;
+                act.moves += val; act.expected += val;
+                act.movements.push({type:t, desc:d, amount:val});
+                app.save(); app.checkBox(); app.updateGlobalBoxState();
+                document.getElementById('movDesc').value = ''; document.getElementById('movAmnt').value = '';
+            },
+
+            closeBox: () => {
+                const act = app.data.sessions.find(s => s.status === 'open'); if(!act) return;
+                const r = parseFloat(document.getElementById('realCash').value);
+                if(isNaN(r)) return alert("Ingrese monto real");
+                if(!confirm("¿Cerrar Turno?")) return;
+                act.real = r; act.diff = r - act.expected; act.end = new Date(); act.status = 'closed';
+                app.save(); app.checkBox(); app.updateGlobalBoxState(); document.getElementById('realCash').value = '';
+            },
+
+            // --- POS ---
             renderPOS: () => {
                 const q = document.getElementById('search').value.toLowerCase();
                 document.getElementById('posGrid').innerHTML = app.data.db.filter(p => p.name.toLowerCase().includes(q) || p.id.toString().includes(q)).map(p => `
@@ -385,76 +470,82 @@
                     return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;align-items:center;gap:5px;"><b>${i.qty}</b><button class="btn-danger" style="padding:2px 6px;" onclick="app.remCart(${i.id})">x</button></div></div>`;
                 }).join('');
                 document.getElementById('cartTotal').innerText = t.toFixed(2);
-                document.getElementById('btnCheckout').disabled = app.data.cart.length === 0;
+                
+                // Habilitar botón solo si hay items Y hay caja abierta
+                const act = app.data.sessions.find(s => s.status === 'open');
+                document.getElementById('btnCheckout').disabled = (app.data.cart.length === 0 || !act);
             },
             remCart: (id) => { app.data.cart = app.data.cart.filter(x => x.id != id); app.renderCart(); },
             openPay: () => { document.getElementById('modalTotal').innerText = document.getElementById('cartTotal').innerText; document.getElementById('payModal').classList.add('open'); },
             pay: (m) => {
-                const act = app.data.sessions.find(s => s.status == 'open'); if(!act) return alert('Caja cerrada');
+                const act = app.data.sessions.find(s => s.status === 'open');
+                if(!act) return alert('Caja cerrada');
                 const t = parseFloat(document.getElementById('cartTotal').innerText);
-                act.salesTotal += t; 
-                if(m=='Efectivo') act.salesCash = (act.salesCash||0)+t;
-                act.expected = act.init + (act.salesCash||0) + act.moves;
+                
+                act.salesTotal += t;
+                if(m=='Efectivo') { act.salesCash = (act.salesCash||0)+t; act.expected += t; } 
+                else if(m=='Yape') act.salesYape = (act.salesYape||0)+t;
+                else if(m=='Plin') act.salesPlin = (act.salesPlin||0)+t;
+                else act.salesCard = (act.salesCard||0)+t;
+
                 app.data.sales.push({id:Date.now(), date:new Date().toLocaleString(), total:t, method:m});
-                app.data.cart = []; app.save(); app.renderCart(); document.getElementById('payModal').classList.remove('open');
-                alert('Venta realizada'); app.checkBox();
+                
+                app.data.cart.forEach(c => {
+                    const p = app.data.db.find(x => x.id == c.id);
+                    p.stock -= c.qty;
+                });
+
+                app.data.cart = []; app.save(); app.renderCart(); app.renderPOS(); app.updateGlobalBoxState();
+                document.getElementById('payModal').classList.remove('open');
+                alert('Venta Registrada');
             },
 
-            // --- CONFIG (USERS & ROLES) ---
+            // --- OTHERS ---
+            startScanner: () => {
+                document.getElementById('scanModal').classList.add('open');
+                app.html5QrcodeScanner = new Html5QrcodeScanner("scanner-container", { fps: 10, qrbox: 250 });
+                app.html5QrcodeScanner.render((txt) => {
+                    app.stopScanner();
+                    const p = app.data.db.find(x => x.id == txt);
+                    if (p) { app.addToCart(p.id); alert(`Producto: ${p.name}`); } 
+                    else if(confirm('Producto no existe. ¿Crear?')) { app.nav('inv'); document.getElementById('pId').value = txt; }
+                });
+            },
+            stopScanner: () => { if(app.html5QrcodeScanner) app.html5QrcodeScanner.clear(); document.getElementById('scanModal').classList.remove('open'); },
+
+            addProd: () => {
+                const id = document.getElementById('pId').value, name = document.getElementById('pName').value, price = parseFloat(document.getElementById('pPrice').value), stock = parseInt(document.getElementById('pStock').value);
+                if(name && price) {
+                    app.data.db.push({id:id||Date.now(), name, price, stock:stock||0, type:'product'});
+                    app.save(); app.renderInv();
+                }
+            },
+            renderInv: () => { document.getElementById('invTable').innerHTML = app.data.db.map(p => `<tr><td>${p.id}</td><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td><td><button class="btn-danger" onclick="app.delProd(${p.id})">X</button></td></tr>`).join(''); },
+            delProd: (id) => { if(confirm('Eliminar?')){ app.data.db = app.data.db.filter(x => x.id != id); app.save(); app.renderInv(); } },
+            
             renderConfig: () => {
-                // Roles list
-                document.getElementById('rolesList').innerHTML = app.data.roles.map(r => `<span class="role-badge" style="background:#e0e7ff;padding:5px;margin:2px;border-radius:4px;">${r.name} <span style="font-size:0.7em;cursor:pointer;color:red;" onclick="app.delRole(${r.id})">x</span></span>`).join('');
-                // User Select
+                document.getElementById('rolesList').innerHTML = app.data.roles.map(r => `<span class="role-badge" style="background:#e0e7ff;margin:2px;padding:2px 5px;border-radius:4px;">${r.name}</span>`).join('');
                 document.getElementById('uRole').innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-                // User Table
-                document.getElementById('usersTable').innerHTML = app.data.users.map(u => `<tr><td>${u.user}</td><td>${app.data.roles.find(r=>r.id==u.roleId)?.name}</td><td>${u.id>1?`<button class="btn-danger" onclick="app.delUser(${u.id})">X</button>`:'-'}</td></tr>`).join('');
+                document.getElementById('usersTable').innerHTML = app.data.users.map(u => `<tr><td>${u.user}</td><td>${app.data.roles.find(r=>r.id==u.roleId)?.name}</td><td><button class="btn-danger" onclick="app.delUser(${u.id})">X</button></td></tr>`).join('');
             },
             addRole: () => {
                 const n = document.getElementById('newRoleName').value;
-                if(!n) return;
-                const perms = Array.from(document.querySelectorAll('.chk-perm:checked')).map(c => c.value);
-                app.data.roles.push({id:Date.now(), name:n, perms:perms});
-                app.save(); app.renderConfig();
+                const p = Array.from(document.querySelectorAll('.chk-perm:checked')).map(c => c.value);
+                if(n) { app.data.roles.push({id:Date.now(), name:n, perms:p}); app.save(); app.renderConfig(); }
             },
-            delRole: (id) => { if(id>2 && confirm('Del?')){ app.data.roles = app.data.roles.filter(r=>r.id!=id); app.save(); app.renderConfig(); } },
             addUser: () => {
                 const u = document.getElementById('uUser').value, p = document.getElementById('uPass').value, r = document.getElementById('uRole').value;
-                if(u && p){ app.data.users.push({id:Date.now(), user:u, pass:p, roleId:r}); app.save(); app.renderConfig(); }
+                if(u && p) { app.data.users.push({id:Date.now(), user:u, pass:p, roleId:r}); app.save(); app.renderConfig(); }
             },
-            delUser: (id) => { if(confirm('Del?')){ app.data.users = app.data.users.filter(u=>u.id!=id); app.save(); app.renderConfig(); } },
-
-            // --- STANDARD MODULES ---
-            checkBox: () => {
-                const act = app.data.sessions.find(s=>s.status=='open');
-                document.getElementById('cajaClosed').style.display = act?'none':'block';
-                document.getElementById('viewOpen').style.display = act?'block':'none';
-                document.getElementById('posStatus').className = act?'badge open':'badge closed';
-                document.getElementById('posStatus').innerText = act?'Abierto':'Cerrado';
-                document.getElementById('cajaStatus').className = document.getElementById('posStatus').className;
-                document.getElementById('cajaStatus').innerText = document.getElementById('posStatus').innerText;
-                document.getElementById('btnCheckout').disabled = !act;
-
-                if(act) {
-                    document.getElementById('lblCash').innerText = act.expected.toFixed(2);
-                    document.getElementById('movList').innerHTML = (act.movements||[]).map(m=>`<div>${m.desc}: ${m.amount}</div>`).join('');
-                }
-                document.getElementById('boxHistory').innerHTML = [...app.data.sessions].reverse().map(s=>`<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.salesTotal}</td><td>${s.diff||'-'}</td><td>PDF</td></tr>`).join('');
-            },
-            openBox: () => { const v=parseFloat(document.getElementById('initCash').value); if(isNaN(v))return; app.data.sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,moves:0,expected:v,status:'open',movements:[]}); app.save(); app.checkBox(); },
-            addMove: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value); if(!d||isNaN(a))return; const v=t=='in'?a:-a; act.moves+=v; act.expected+=v; act.movements.push({desc:d,amount:v}); app.save(); app.checkBox(); },
-            closeBox: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const r=parseFloat(document.getElementById('realCash').value); if(isNaN(r))return; act.real=r; act.diff=r-act.expected; act.status='closed'; act.end=new Date(); app.save(); app.checkBox(); },
-
-            addProd: () => { const n=document.getElementById('pName').value, p=parseFloat(document.getElementById('pPrice').value); if(n&&p){ app.data.db.push({id:document.getElementById('pId').value||Date.now(),name:n,price:p,stock:parseInt(document.getElementById('pStock').value)||0,type:'product'}); app.save(); app.renderInv(); } },
-            renderInv: () => { document.getElementById('invTable').innerHTML=app.data.db.map(p=>`<tr><td>${p.id}</td><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td><td><button class="btn-danger" onclick="app.delProd(${p.id})">X</button></td></tr>`).join(''); },
-            delProd: (id) => { if(confirm('Del?')){app.data.db=app.data.db.filter(x=>x.id!=id); app.save(); app.renderInv();} },
-            renderRep: () => { document.getElementById('repTable').innerHTML=[...app.data.sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''); },
+            delUser: (id) => { if(id>2 && confirm('Del?')){ app.data.users = app.data.users.filter(u => u.id != id); app.save(); app.renderConfig(); } },
+            renderRep: () => { document.getElementById('repTable').innerHTML = [...app.data.sales].reverse().map(s => `<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''); },
 
             save: () => {
-                localStorage.setItem('pos_db_v22',JSON.stringify(app.data.db));
-                localStorage.setItem('pos_sales_v22',JSON.stringify(app.data.sales));
-                localStorage.setItem('pos_sessions_v22',JSON.stringify(app.data.sessions));
-                localStorage.setItem('pos_users_v22',JSON.stringify(app.data.users));
-                localStorage.setItem('pos_roles_v22',JSON.stringify(app.data.roles));
+                localStorage.setItem('pos_db_v23', JSON.stringify(app.data.db));
+                localStorage.setItem('pos_sales_v23', JSON.stringify(app.data.sales));
+                localStorage.setItem('pos_sessions_v23', JSON.stringify(app.data.sessions));
+                localStorage.setItem('pos_users_v23', JSON.stringify(app.data.users));
+                localStorage.setItem('pos_roles_v23', JSON.stringify(app.data.roles));
             }
         };
         
