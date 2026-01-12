@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Market POS v21: Diseño Mejorado</title>
+    <title>Market POS v22: Cam Scanner & Users</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -19,11 +20,7 @@
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg); color: var(--text); margin: 0; 
-            height: 100vh; overflow: hidden; display: flex;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; display: flex; }
 
         /* LOGIN */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -55,81 +52,53 @@
         .badge.open { background: #dcfce7; color: #166534; }
         .badge.closed { background: #fee2e2; color: #991b1b; }
 
-        /* --- POS IMPROVED --- */
+        /* POS */
         .pos-container { display: flex; flex: 1; overflow: hidden; }
         .products-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .cart-area { width: 400px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; }
+        .cart-area { width: 380px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; }
+        @media (max-width: 768px) { .main-content { height: calc(100vh - var(--nav-height)); } .pos-container { flex-direction: column; } .products-area { height: 60%; } .cart-area { width: 100%; height: 40%; border-left: none; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); } }
 
-        @media (max-width: 768px) {
-            .main-content { height: calc(100vh - var(--nav-height)); }
-            .pos-container { flex-direction: column; }
-            .products-area { height: 55%; }
-            .cart-area { width: 100%; height: 45%; border-left: none; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); }
-        }
+        .search-wrapper { display: flex; gap: 10px; }
+        .search-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; }
+        .btn-scan { background: var(--text); color: white; border: none; border-radius: 8px; width: 50px; cursor: pointer; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
 
-        /* GRID PRODUCTOS */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
         .card { background: white; padding: 10px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .card:active { border-color: var(--primary); transform: scale(0.98); }
         .card.no-stock { opacity: 0.6; pointer-events: none; background: #f1f5f9; }
-        .card-price { font-weight: 800; color: var(--primary); margin-top: 5px; }
-        .stock-tag { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
+        .badge-stock { position: absolute; top: 5px; right: 5px; font-size: 0.7rem; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
 
-        /* --- NUEVO DISEÑO CARRITO --- */
-        .cart-header { padding: 15px; font-weight: 800; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .cart-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        
-        /* Item del carrito mejorado */
-        .cart-item { 
-            display: flex; align-items: center; justify-content: space-between; 
-            background: white; padding: 10px; border: 1px solid var(--border); border-radius: 8px; 
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-        .item-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-        .item-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-price { font-size: 0.8rem; color: #64748b; }
-        
-        .item-controls { display: flex; align-items: center; gap: 5px; margin: 0 10px; }
-        .qty-btn { 
-            width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); 
-            background: #f1f5f9; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center;
-        }
-        .qty-btn:active { background: #e2e8f0; }
-        .qty-input { 
-            width: 40px; height: 28px; text-align: center; border: 1px solid var(--border); 
-            border-radius: 6px; font-weight: bold; font-size: 0.9rem; -moz-appearance: textfield; 
-        }
-        
-        .item-subtotal { font-weight: 700; width: 60px; text-align: right; font-size: 0.95rem; }
-        .btn-trash { 
-            background: #fee2e2; color: var(--danger); border: none; width: 32px; height: 32px; 
-            border-radius: 6px; cursor: pointer; margin-left: 8px; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-trash:active { background: #fecaca; }
-
+        .cart-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); }
         .cart-footer { padding: 15px; border-top: 1px solid var(--border); background: white; flex-shrink: 0; }
-        .btn-pay { width: 100%; background: var(--success); color: white; padding: 14px; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(22, 163, 74, 0.2); }
-        .btn-pay:hover { background: #15803d; transform: translateY(-1px); }
-        .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-pay { width: 100%; background: var(--success); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; }
 
         /* GENERAL */
         .page-content { padding: 20px; overflow-y: auto; height: 100%; }
         .card-box { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .input-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+        .input-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
         .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-danger { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .btn-edit { background: var(--warning); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; }
+
+        /* TABLES */
         .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; background: white; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         th { background: #f8fafc; font-weight: 600; color: #64748b; }
 
+        /* CONFIG PANEL */
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .role-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #e0e7ff; color: var(--primary); font-size: 0.8rem; margin: 2px; }
+
         /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
         .modal-overlay.open { display: flex; }
-        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
-        .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; }
-        .pay-option { padding: 15px; border: 1px solid var(--border); border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; background: white; display: flex; flex-direction: column; align-items: center; gap: 5px;}
-        .pay-option:hover { border-color: var(--primary); background: #eff6ff; }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; position: relative; }
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; z-index: 10; }
+        
+        #scanner-container { width: 100%; height: 300px; background: black; }
 
         #print-area { display: none; }
         @media print { body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; } }
@@ -156,18 +125,17 @@
             </div>
             <div class="pos-container">
                 <div class="products-area">
-                    <input type="text" id="search" class="input-control" placeholder="🔍 Buscar producto..." onkeyup="app.renderPOS()">
+                    <div class="search-wrapper">
+                        <input type="text" id="search" class="search-input" placeholder="🔍 Buscar nombre o código..." onkeyup="app.renderPOS()">
+                        <button class="btn-scan" onclick="app.startScanner()">📷</button>
+                    </div>
                     <div class="grid" id="posGrid" style="margin-top: 15px;"></div>
                 </div>
                 <div class="cart-area">
-                    <div class="cart-header">
-                        <span>Ticket de Venta</span>
-                        <span style="font-size:0.8rem; color:#64748b;" id="cartCount">0 items</span>
-                    </div>
-                    <div class="cart-list" id="cartList">
-                        </div>
+                    <div style="padding:15px; border-bottom:1px solid #eee; font-weight:bold;">Ticket</div>
+                    <div class="cart-list" id="cartList"></div>
                     <div class="cart-footer">
-                        <div style="display:flex; justify-content:space-between; font-size:1.3rem; font-weight:800; margin-bottom:10px; color:var(--text);">
+                        <div style="display:flex; justify-content:space-between; font-size:1.2rem; font-weight:bold; margin-bottom:10px;">
                             <span>Total</span><span>S/ <span id="cartTotal">0.00</span></span>
                         </div>
                         <button id="btnCheckout" class="btn-pay" onclick="app.openPay()" disabled>COBRAR</button>
@@ -180,14 +148,14 @@
             <div class="header"><span class="title">Caja</span><span class="badge closed" id="cajaStatus">Cerrado</span></div>
             <div class="page-content">
                 <div id="viewClosed" class="card-box" style="text-align:center;">
-                    <h3>🔐 Abrir Nuevo Turno</h3>
-                    <input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial (S/)" style="margin-bottom:10px;">
+                    <h3>🔐 Abrir Turno</h3>
+                    <input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial (S/)">
                     <button class="btn-primary" style="width:100%" onclick="app.openBox()">ABRIR CAJA</button>
                 </div>
                 <div id="viewOpen" style="display:none;">
                     <div class="card-box" style="background:#f0fdfa; border-color:var(--success);">
                         <h2 style="text-align:center; color:var(--success); margin:0;">S/ <span id="lblCash">0.00</span></h2>
-                        <p style="text-align:center; margin:5px 0 0; color:#64748b; font-size:0.9rem;">Efectivo en Cajón</p>
+                        <p style="text-align:center; margin:0; color:#64748b;">En Caja</p>
                     </div>
                     <div class="card-box">
                         <h4>Movimientos</h4>
@@ -202,13 +170,11 @@
                     <div class="card-box" style="border-left:4px solid var(--danger);">
                         <h4>Cerrar Turno</h4>
                         <div style="display:flex; gap:10px; align-items:flex-end;">
-                            <div style="flex:1;"><label>Efectivo Real en Cajón</label><input type="number" id="realCash" class="input-control"></div>
+                            <div style="flex:1;"><input type="number" id="realCash" class="input-control" placeholder="Efectivo Real" style="margin:0;"></div>
                             <button class="btn-danger" style="height:42px;" onclick="app.closeBox()">CERRAR</button>
                         </div>
                     </div>
                 </div>
-                <h3>Historial</h3>
-                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Inicio</th><th>Ventas</th><th>Dif.</th><th>PDF</th></tr></thead><tbody id="boxHistory"></tbody></table></div>
             </div>
         </section>
 
@@ -216,13 +182,11 @@
             <div class="header"><span class="title">Inventario</span></div>
             <div class="page-content">
                 <div class="card-box">
-                    <h4>Agregar Producto</h4>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <input id="pId" placeholder="ID" class="input-control" style="width:80px;">
+                        <input id="pId" placeholder="Código" class="input-control" style="width:100px;">
                         <input id="pName" placeholder="Nombre" class="input-control" style="flex:1;">
                         <input id="pPrice" placeholder="Precio" type="number" class="input-control" style="width:80px;">
                         <input id="pStock" placeholder="Stock" type="number" class="input-control" style="width:70px;">
-                        <select id="pType" class="input-control" style="width:100px;"><option value="product">Prod</option><option value="service">Serv</option></select>
                         <button class="btn-primary" onclick="app.addProd()">Guardar</button>
                     </div>
                 </div>
@@ -230,18 +194,62 @@
             </div>
         </section>
 
-        <section id="audit" class="main-content"><div class="header"><span class="title">Kardex</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Producto</th><th>Mov</th><th>Cant</th><th>Stk</th><th>Usr</th></tr></thead><tbody id="auditTable"></tbody></table></div></div></section>
-        <section id="rep" class="main-content"><div class="header"><span class="title">Reportes</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Metodo</th><th>Total</th><th>Detalle</th></tr></thead><tbody id="repTable"></tbody></table></div></div></section>
+        <section id="conf" class="main-content">
+            <div class="header"><span class="title">Configuración</span></div>
+            <div class="page-content">
+                <div class="config-grid">
+                    <div class="card-box">
+                        <h4>Gestión de Roles</h4>
+                        <div style="display:flex; gap:10px;">
+                            <input id="newRoleName" class="input-control" placeholder="Nombre Rol">
+                            <button class="btn-primary" onclick="app.addRole()">+</button>
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            <label><input type="checkbox" class="chk-perm" value="pos">Ventas</label>
+                            <label><input type="checkbox" class="chk-perm" value="caja">Caja</label>
+                            <label><input type="checkbox" class="chk-perm" value="inv">Stock</label>
+                            <label><input type="checkbox" class="chk-perm" value="conf">Config</label>
+                        </div>
+                        <div id="rolesList"></div>
+                    </div>
+                    <div class="card-box">
+                        <h4>Gestión de Usuarios</h4>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <input id="uUser" class="input-control" placeholder="Usuario" style="flex:1;">
+                            <input id="uPass" class="input-control" placeholder="Clave" style="width:100px;">
+                            <select id="uRole" class="input-control" style="width:120px;"></select>
+                            <button class="btn-primary" onclick="app.addUser()">Crear</button>
+                        </div>
+                        <div class="table-wrap" style="margin-top:10px;">
+                            <table><thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead><tbody id="usersTable"></tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="rep" class="main-content"><div class="header"><span class="title">Reportes</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Pago</th></tr></thead><tbody id="repTable"></tbody></table></div></div></section>
+    </div>
+
+    <div id="scanModal" class="modal-overlay">
+        <div class="modal-content" style="background:black;">
+            <span class="modal-close" onclick="app.stopScanner()" style="color:white;">✕</span>
+            <div id="scanner-container"></div>
+            <p style="color:white; text-align:center; padding:10px;">Apunta al código de barras</p>
+        </div>
     </div>
 
     <div id="payModal" class="modal-overlay">
         <div class="modal-content">
-            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>Total: S/ <span id="modalTotal">0.00</span></b><span style="cursor:pointer; font-size:1.2rem;" onclick="document.getElementById('payModal').classList.remove('open')">✕</span></div>
-            <div class="pay-methods">
-                <div class="pay-option" onclick="app.pay('Efectivo')"><span style="font-size:1.5rem">💵</span>Efectivo</div>
-                <div class="pay-option" onclick="app.pay('Yape')"><span style="font-size:1.5rem;color:#742284">📱</span>Yape</div>
-                <div class="pay-option" onclick="app.pay('Plin')"><span style="font-size:1.5rem;color:#00d1d1">🔄</span>Plin</div>
-                <div class="pay-option" onclick="app.pay('Tarjeta')"><span style="font-size:1.5rem">💳</span>Tarjeta</div>
+            <span class="modal-close" onclick="document.getElementById('payModal').classList.remove('open')">✕</span>
+            <div style="padding:20px; text-align:center;">
+                <h3>Total: S/ <span id="modalTotal">0.00</span></h3>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+                    <button class="input-control" onclick="app.pay('Efectivo')">💵 Efectivo</button>
+                    <button class="input-control" onclick="app.pay('Yape')">📱 Yape</button>
+                    <button class="input-control" onclick="app.pay('Plin')">🔄 Plin</button>
+                    <button class="input-control" onclick="app.pay('Tarjeta')">💳 Tarjeta</button>
+                </div>
             </div>
         </div>
     </div>
@@ -251,166 +259,206 @@
     <script>
         const app = {
             data: {
-                users: [{user:'admin', pass:'1234', role:'admin'}],
-                roles: {'admin': ['pos', 'caja', 'inv', 'audit', 'rep']},
-                db: JSON.parse(localStorage.getItem('db')) || [{id:1, name:'Agua 500ml', price:1.5, stock:50, type:'product'}],
-                sales: JSON.parse(localStorage.getItem('sales')) || [],
-                sessions: JSON.parse(localStorage.getItem('sessions')) || [],
-                kardex: JSON.parse(localStorage.getItem('kardex')) || [],
+                // Estructura: {id, name, perms:[]}
+                roles: JSON.parse(localStorage.getItem('pos_roles_v22')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep']},{id:2, name:'Cajero', perms:['pos','caja']}],
+                // Estructura: {id, user, pass, roleId}
+                users: JSON.parse(localStorage.getItem('pos_users_v22')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
+                db: JSON.parse(localStorage.getItem('pos_db_v22')) || [],
+                sales: JSON.parse(localStorage.getItem('pos_sales_v22')) || [],
+                sessions: JSON.parse(localStorage.getItem('pos_sessions_v22')) || [],
                 cart: [],
                 currentUser: null,
-                currentRole: null
+                html5QrcodeScanner: null
             },
 
+            // --- AUTH ---
             login: () => {
-                const u = document.getElementById('user').value, p = document.getElementById('pass').value;
-                const usr = app.data.users.find(x => x.user === u && x.pass === p);
-                if (usr) {
-                    app.data.currentUser = usr; app.data.currentRole = app.data.roles[usr.role];
+                const u = document.getElementById('user').value;
+                const p = document.getElementById('pass').value;
+                const user = app.data.users.find(x => x.user === u && x.pass === p);
+                if (user) {
+                    app.data.currentUser = user;
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('app-layout').style.display = 'flex';
-                    app.buildMenu(); app.nav(app.data.currentRole[0]);
-                } else alert('Error de credenciales');
+                    app.buildMenu();
+                } else alert("Error");
             },
 
             buildMenu: () => {
-                const m = document.getElementById('mainNav'); m.innerHTML = '';
-                const items = [{id:'pos',i:'🛒',l:'Ventas'},{id:'caja',i:'🏪',l:'Caja'},{id:'inv',i:'📦',l:'Stock'},{id:'audit',i:'👁️',l:'Kardex'},{id:'rep',i:'📊',l:'Rep'}];
-                items.forEach(x => {
-                    if (app.data.currentRole.includes(x.id)) {
-                        const b = document.createElement('button'); b.className = 'nav-btn';
-                        b.onclick = () => app.nav(x.id); b.innerHTML = `<i>${x.i}</i><span>${x.l}</span>`;
-                        m.appendChild(b);
+                const role = app.data.roles.find(r => r.id == app.data.currentUser.roleId);
+                if(!role) return alert("Rol no encontrado");
+                
+                const menu = document.getElementById('mainNav'); menu.innerHTML = '';
+                const allMods = [
+                    {id:'pos', i:'🛒', l:'Ventas'},
+                    {id:'caja', i:'🏪', l:'Caja'},
+                    {id:'inv', i:'📦', l:'Stock'},
+                    {id:'rep', i:'📊', l:'Rep'},
+                    {id:'conf', i:'⚙️', l:'Config'}
+                ];
+
+                let first = null;
+                allMods.forEach(m => {
+                    if (role.perms.includes(m.id)) {
+                        if(!first) first = m.id;
+                        const btn = document.createElement('button');
+                        btn.className = 'nav-btn';
+                        btn.onclick = () => app.nav(m.id);
+                        btn.innerHTML = `<i>${m.i}</i><span>${m.l}</span>`;
+                        menu.appendChild(btn);
                     }
                 });
+                
+                // Logout btn
+                const out = document.createElement('button');
+                out.className = 'nav-btn';
+                out.innerHTML = `<i>🚪</i><span>Salir</span>`;
+                out.onclick = () => location.reload();
+                menu.appendChild(out);
+
+                if(first) app.nav(first);
             },
 
             nav: (id) => {
                 document.querySelectorAll('.main-content').forEach(e => e.classList.remove('active'));
                 document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
-                const t = document.getElementById(id);
-                if(t) {
-                    t.classList.add('active');
-                    const btns = document.querySelectorAll('.nav-btn');
-                    btns.forEach(b => { if(b.innerHTML.includes(id=='pos'?'Ventas':id=='caja'?'Caja':id=='inv'?'Stock':id=='audit'?'Kardex':'Rep')) b.classList.add('active'); });
-                    if(id=='pos') app.renderPOS(); if(id=='caja') app.checkBox(); if(id=='inv') app.renderInv(); if(id=='audit') app.renderKardex(); if(id=='rep') app.renderRep();
-                }
+                const target = document.getElementById(id);
+                if(target) target.classList.add('active');
+                
+                // Highlight button
+                const btns = document.querySelectorAll('.nav-btn');
+                btns.forEach(b => { if(b.innerHTML.includes(id=='pos'?'Ventas':id=='caja'?'Caja':id=='inv'?'Stock':id=='conf'?'Config':'Rep')) b.classList.add('active'); });
+
+                if(id=='pos') app.renderPOS();
+                if(id=='caja') app.checkBox();
+                if(id=='inv') app.renderInv();
+                if(id=='conf') app.renderConfig();
+                if(id=='rep') app.renderRep();
             },
 
+            // --- CAMERA SCANNER ---
+            startScanner: () => {
+                document.getElementById('scanModal').classList.add('open');
+                app.html5QrcodeScanner = new Html5QrcodeScanner("scanner-container", { fps: 10, qrbox: 250 });
+                app.html5QrcodeScanner.render(app.onScanSuccess);
+            },
+            onScanSuccess: (decodedText) => {
+                app.stopScanner();
+                const p = app.data.db.find(x => x.id == decodedText);
+                if (p) {
+                    app.addToCart(p.id);
+                    alert(`Agregado: ${p.name}`);
+                } else {
+                    if(confirm(`Producto ${decodedText} no existe. ¿Crearlo?`)) {
+                        app.nav('inv');
+                        document.getElementById('pId').value = decodedText;
+                    }
+                }
+            },
+            stopScanner: () => {
+                if(app.html5QrcodeScanner) app.html5QrcodeScanner.clear();
+                document.getElementById('scanModal').classList.remove('open');
+            },
+
+            // --- POS LOGIC ---
             renderPOS: () => {
                 const q = document.getElementById('search').value.toLowerCase();
-                document.getElementById('posGrid').innerHTML = app.data.db.filter(p => p.name.toLowerCase().includes(q)).map(p => `
-                    <div class="card ${p.type=='product'&&p.stock<=0?'no-stock':''}" onclick="app.addToCart(${p.id})">
-                        <span class="stock-tag">${p.type=='service'?'Srv':p.stock}</span>
+                document.getElementById('posGrid').innerHTML = app.data.db.filter(p => p.name.toLowerCase().includes(q) || p.id.toString().includes(q)).map(p => `
+                    <div class="card ${p.stock<=0?'no-stock':''}" onclick="app.addToCart(${p.id})">
+                        <span class="badge-stock">${p.stock}</span>
                         <div style="font-weight:bold;font-size:0.9rem;">${p.name}</div>
                         <div class="card-price">S/ ${p.price.toFixed(2)}</div>
                     </div>
                 `).join('');
             },
-
             addToCart: (id) => {
                 const p = app.data.db.find(x => x.id == id);
-                if (p.type=='product' && p.stock<=0) return;
                 const i = app.data.cart.find(x => x.id == id);
-                if (i) { if(p.type=='product' && i.qty>=p.stock) return alert('Max Stock'); i.qty++; }
+                if (i) { if(i.qty >= p.stock) return alert('Max Stock'); i.qty++; }
                 else app.data.cart.push({...p, qty:1});
                 app.renderCart();
             },
-
-            updateQty: (id, val) => {
-                const v = parseInt(val);
-                if(isNaN(v) || v <= 0) app.remCart(id);
-                else {
-                    const i = app.data.cart.find(x => x.id == id);
-                    const p = app.data.db.find(x => x.id == id);
-                    if(p.type=='product' && v > p.stock) alert('Stock insuficiente');
-                    else i.qty = v;
-                    app.renderCart();
-                }
-            },
-
             renderCart: () => {
-                let t = 0, count = 0;
+                let t = 0;
                 document.getElementById('cartList').innerHTML = app.data.cart.map(i => {
-                    t += i.price * i.qty; count++;
-                    return `
-                    <div class="cart-item">
-                        <div class="item-info">
-                            <span class="item-name">${i.name}</span>
-                            <span class="item-price">S/ ${i.price.toFixed(2)}</span>
-                        </div>
-                        <div class="item-controls">
-                            <button class="qty-btn" onclick="app.updateQty(${i.id}, ${i.qty-1})">-</button>
-                            <input class="qty-input" type="number" value="${i.qty}" onchange="app.updateQty(${i.id}, this.value)">
-                            <button class="qty-btn" onclick="app.updateQty(${i.id}, ${i.qty+1})">+</button>
-                        </div>
-                        <div class="item-subtotal">S/ ${(i.price*i.qty).toFixed(2)}</div>
-                        <button class="btn-trash" onclick="app.remCart(${i.id})">🗑️</button>
-                    </div>`;
+                    t += i.price * i.qty;
+                    return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;align-items:center;gap:5px;"><b>${i.qty}</b><button class="btn-danger" style="padding:2px 6px;" onclick="app.remCart(${i.id})">x</button></div></div>`;
                 }).join('');
                 document.getElementById('cartTotal').innerText = t.toFixed(2);
-                document.getElementById('cartCount').innerText = `${count} items`;
-                document.getElementById('btnCheckout').disabled = count === 0;
+                document.getElementById('btnCheckout').disabled = app.data.cart.length === 0;
             },
-
             remCart: (id) => { app.data.cart = app.data.cart.filter(x => x.id != id); app.renderCart(); },
             openPay: () => { document.getElementById('modalTotal').innerText = document.getElementById('cartTotal').innerText; document.getElementById('payModal').classList.add('open'); },
-            
             pay: (m) => {
-                const act = app.data.sessions.find(s => s.status == 'open');
-                if(!act) return alert('Caja cerrada');
-                const t = app.data.cart.reduce((a,b)=>a+(b.price*b.qty),0);
-                act.salesTotal += t;
-                if(m=='Efectivo') act.salesCash = (act.salesCash||0) + t;
+                const act = app.data.sessions.find(s => s.status == 'open'); if(!act) return alert('Caja cerrada');
+                const t = parseFloat(document.getElementById('cartTotal').innerText);
+                act.salesTotal += t; 
+                if(m=='Efectivo') act.salesCash = (act.salesCash||0)+t;
                 act.expected = act.init + (act.salesCash||0) + act.moves;
-                
-                const sale = {id:Date.now(), date:new Date().toLocaleString(), items:[...app.data.cart], total:t, method:m, user:app.data.currentUser.user};
-                app.data.cart.forEach(c => {
-                    if(c.type=='product'){
-                        const p = app.data.db.find(x=>x.id==c.id); p.stock-=c.qty;
-                        app.logKardex(p.id, p.name, 'VENTA', -c.qty, p.stock, `T-${sale.id}`);
-                    }
-                });
-                app.data.sales.push(sale);
-                app.save(); app.printTicket(sale); 
-                app.data.cart=[]; app.renderCart(); app.renderPOS(); 
-                document.getElementById('payModal').classList.remove('open');
+                app.data.sales.push({id:Date.now(), date:new Date().toLocaleString(), total:t, method:m});
+                app.data.cart = []; app.save(); app.renderCart(); document.getElementById('payModal').classList.remove('open');
+                alert('Venta realizada'); app.checkBox();
             },
 
+            // --- CONFIG (USERS & ROLES) ---
+            renderConfig: () => {
+                // Roles list
+                document.getElementById('rolesList').innerHTML = app.data.roles.map(r => `<span class="role-badge" style="background:#e0e7ff;padding:5px;margin:2px;border-radius:4px;">${r.name} <span style="font-size:0.7em;cursor:pointer;color:red;" onclick="app.delRole(${r.id})">x</span></span>`).join('');
+                // User Select
+                document.getElementById('uRole').innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                // User Table
+                document.getElementById('usersTable').innerHTML = app.data.users.map(u => `<tr><td>${u.user}</td><td>${app.data.roles.find(r=>r.id==u.roleId)?.name}</td><td>${u.id>1?`<button class="btn-danger" onclick="app.delUser(${u.id})">X</button>`:'-'}</td></tr>`).join('');
+            },
+            addRole: () => {
+                const n = document.getElementById('newRoleName').value;
+                if(!n) return;
+                const perms = Array.from(document.querySelectorAll('.chk-perm:checked')).map(c => c.value);
+                app.data.roles.push({id:Date.now(), name:n, perms:perms});
+                app.save(); app.renderConfig();
+            },
+            delRole: (id) => { if(id>2 && confirm('Del?')){ app.data.roles = app.data.roles.filter(r=>r.id!=id); app.save(); app.renderConfig(); } },
+            addUser: () => {
+                const u = document.getElementById('uUser').value, p = document.getElementById('uPass').value, r = document.getElementById('uRole').value;
+                if(u && p){ app.data.users.push({id:Date.now(), user:u, pass:p, roleId:r}); app.save(); app.renderConfig(); }
+            },
+            delUser: (id) => { if(confirm('Del?')){ app.data.users = app.data.users.filter(u=>u.id!=id); app.save(); app.renderConfig(); } },
+
+            // --- STANDARD MODULES ---
             checkBox: () => {
-                const act = app.data.sessions.find(s => s.status == 'open');
-                const st = act?'Abierto':'Cerrado'; const cls=act?'open':'closed';
-                document.getElementById('posStatus').innerText=st; document.getElementById('posStatus').className='badge '+cls;
-                document.getElementById('cajaStatus').innerText=st; document.getElementById('cajaStatus').className='badge '+cls;
-                document.getElementById('viewClosed').style.display=act?'none':'block';
-                document.getElementById('viewOpen').style.display=act?'block':'none';
+                const act = app.data.sessions.find(s=>s.status=='open');
+                document.getElementById('cajaClosed').style.display = act?'none':'block';
+                document.getElementById('viewOpen').style.display = act?'block':'none';
+                document.getElementById('posStatus').className = act?'badge open':'badge closed';
+                document.getElementById('posStatus').innerText = act?'Abierto':'Cerrado';
+                document.getElementById('cajaStatus').className = document.getElementById('posStatus').className;
+                document.getElementById('cajaStatus').innerText = document.getElementById('posStatus').innerText;
                 document.getElementById('btnCheckout').disabled = !act;
 
-                if(act){
-                    document.getElementById('lblCash').innerText=act.expected.toFixed(2);
-                    document.getElementById('movList').innerHTML=(act.movements||[]).map(m=>`<div>${m.desc}: ${m.amount}</div>`).join('');
+                if(act) {
+                    document.getElementById('lblCash').innerText = act.expected.toFixed(2);
+                    document.getElementById('movList').innerHTML = (act.movements||[]).map(m=>`<div>${m.desc}: ${m.amount}</div>`).join('');
                 }
-                document.getElementById('boxHistory').innerHTML=[...app.data.sessions].reverse().map(s=>`<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.salesTotal}</td><td>${s.diff||'-'}</td><td><button class="btn-danger" style="padding:2px 5px" onclick="app.pdf(${s.id})">PDF</button></td></tr>`).join('');
+                document.getElementById('boxHistory').innerHTML = [...app.data.sessions].reverse().map(s=>`<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.salesTotal}</td><td>${s.diff||'-'}</td><td>PDF</td></tr>`).join('');
             },
+            openBox: () => { const v=parseFloat(document.getElementById('initCash').value); if(isNaN(v))return; app.data.sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,moves:0,expected:v,status:'open',movements:[]}); app.save(); app.checkBox(); },
+            addMove: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value); if(!d||isNaN(a))return; const v=t=='in'?a:-a; act.moves+=v; act.expected+=v; act.movements.push({desc:d,amount:v}); app.save(); app.checkBox(); },
+            closeBox: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const r=parseFloat(document.getElementById('realCash').value); if(isNaN(r))return; act.real=r; act.diff=r-act.expected; act.status='closed'; act.end=new Date(); app.save(); app.checkBox(); },
 
-            openBox: () => { const v=parseFloat(document.getElementById('initCash').value); if(isNaN(v))return; app.data.sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,salesCash:0,moves:0,expected:v,status:'open',movements:[]}); app.save(); app.checkBox(); },
-            addMove: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value); if(!d||isNaN(a))return; const val=t=='in'?a:-a; act.moves+=val; act.expected+=val; act.movements.push({desc:d,amount:val}); app.save(); app.checkBox(); document.getElementById('movDesc').value=''; document.getElementById('movAmnt').value=''; },
-            closeBox: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const r=parseFloat(document.getElementById('realCash').value); if(isNaN(r))return alert('Ingrese monto'); if(!confirm('Cerrar?'))return; act.real=r; act.diff=r-act.expected; act.end=new Date(); act.status='closed'; app.save(); app.pdf(act.id); app.checkBox(); },
-            
-            pdf: (id) => { const s=app.data.sessions.find(x=>x.id==id); if(!s)return; html2pdf().from(`<div style="padding:20px"><h3>Cierre #${s.id}</h3><p>${new Date(s.start).toLocaleString()}</p><hr><p>Ventas: ${s.salesTotal}</p><p>Efectivo: ${s.salesCash||0}</p><p>Esperado: ${s.expected}</p><p>Real: ${s.real}</p><p>Dif: ${s.diff}</p></div>`).save(); },
-
-            addProd: () => { const n=document.getElementById('pName').value, p=parseFloat(document.getElementById('pPrice').value); if(n&&p){ const pr={id:document.getElementById('pId').value||Date.now(),name:n,price:p,stock:parseInt(document.getElementById('pStock').value)||0,type:document.getElementById('pType').value}; app.data.db.push(pr); app.logKardex(pr.id,n,'CREAR',pr.stock,pr.stock,'Nuevo'); app.save(); app.renderInv(); } },
+            addProd: () => { const n=document.getElementById('pName').value, p=parseFloat(document.getElementById('pPrice').value); if(n&&p){ app.data.db.push({id:document.getElementById('pId').value||Date.now(),name:n,price:p,stock:parseInt(document.getElementById('pStock').value)||0,type:'product'}); app.save(); app.renderInv(); } },
             renderInv: () => { document.getElementById('invTable').innerHTML=app.data.db.map(p=>`<tr><td>${p.id}</td><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td><td><button class="btn-danger" onclick="app.delProd(${p.id})">X</button></td></tr>`).join(''); },
             delProd: (id) => { if(confirm('Del?')){app.data.db=app.data.db.filter(x=>x.id!=id); app.save(); app.renderInv();} },
-            logKardex: (id,n,t,q,s,nt) => { app.data.kardex.push({date:new Date().toLocaleString(),name:n,type:t,qty:q,stock:s,usr:app.data.currentUser.user}); },
-            renderKardex: () => { document.getElementById('auditTable').innerHTML=[...app.data.kardex].reverse().map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td>${k.qty}</td><td>${k.stock}</td><td>${k.usr}</td></tr>`).join(''); },
-            renderRep: () => { document.getElementById('repTable').innerHTML=[...app.data.sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.method}</td><td>${s.total}</td><td>Ver</td></tr>`).join(''); },
+            renderRep: () => { document.getElementById('repTable').innerHTML=[...app.data.sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''); },
 
-            save: () => { localStorage.setItem('db',JSON.stringify(app.data.db)); localStorage.setItem('sales',JSON.stringify(app.data.sales)); localStorage.setItem('sessions',JSON.stringify(app.data.sessions)); localStorage.setItem('kardex',JSON.stringify(app.data.kardex)); },
-            printTicket: (s) => { document.getElementById('print-area').innerHTML=`<div style="width:200px;font-family:monospace;font-size:12px">MARKET<br>#${s.id}<br>${s.date}<hr>${s.items.map(i=>`${i.qty} ${i.name} ${i.price*i.qty}`).join('<br>')}<hr>Total: S/ ${s.total}<br>Pago: ${s.method}</div>`; window.print(); }
+            save: () => {
+                localStorage.setItem('pos_db_v22',JSON.stringify(app.data.db));
+                localStorage.setItem('pos_sales_v22',JSON.stringify(app.data.sales));
+                localStorage.setItem('pos_sessions_v22',JSON.stringify(app.data.sessions));
+                localStorage.setItem('pos_users_v22',JSON.stringify(app.data.users));
+                localStorage.setItem('pos_roles_v22',JSON.stringify(app.data.roles));
+            }
         };
         
-        document.getElementById('posSearch').addEventListener('keyup', app.renderPOS);
+        document.getElementById('search').addEventListener('keyup', app.renderPOS);
     </script>
 </body>
 </html>
