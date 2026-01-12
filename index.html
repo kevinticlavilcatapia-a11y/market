@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Market POS v18: Security & Roles</title>
+    <title>Market POS v19: Caja Restaurada</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -26,102 +26,82 @@
             height: 100dvh; display: flex; overflow: hidden;
         }
 
-        /* --- LOGIN SCREEN --- */
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0f172a; z-index: 9999; display: flex;
-            align-items: center; justify-content: center;
-        }
-        .login-box {
-            background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px;
-            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .login-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; }
+        /* LOGIN */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .login-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; }
-        .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* --- LAYOUT PRINCIPAL (Oculto hasta login) --- */
+        /* LAYOUT */
         #app-layout { display: none; width: 100%; height: 100%; }
-        
-        /* SIDEBAR */
         .sidebar { background: #0f172a; z-index: 100; display: flex; transition: all 0.3s ease; }
         
         @media (min-width: 769px) {
             .sidebar { width: var(--sidebar-width); height: 100%; flex-direction: column; align-items: center; padding-top: 20px; }
             .nav-btn { width: 50px; height: 50px; margin-bottom: 15px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; background: transparent; border: none; cursor: pointer; }
-            .nav-btn span { font-size: 9px; margin-top: 4px; font-weight: 600; }
-            .nav-btn i { font-size: 22px; font-style: normal; }
             .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
             .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); }
+            .nav-btn i { font-size: 22px; font-style: normal; } .nav-btn span { font-size: 9px; margin-top: 4px; }
             .logout-btn { margin-top: auto; margin-bottom: 20px; color: #ef4444; }
         }
-
         @media (max-width: 768px) {
             #app-layout { flex-direction: column; }
             .sidebar { width: 100%; height: var(--nav-height-mobile); flex-direction: row; justify-content: space-around; position: fixed; bottom: 0; left: 0; border-top: 1px solid #1e293b; padding-bottom: env(safe-area-inset-bottom); order: 2; }
             .nav-btn { background: transparent; border: none; color: #94a3b8; flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-            .nav-btn i { font-size: 20px; margin-bottom: 2px; }
-            .nav-btn span { font-size: 10px; }
-            .nav-btn.active { color: var(--primary); background: rgba(255,255,255,0.05); border-top: 3px solid var(--primary); }
+            .nav-btn.active { color: var(--primary); border-top: 3px solid var(--primary); }
+            .nav-btn i { font-size: 20px; } .nav-btn span { font-size: 10px; }
             .logout-btn { position: absolute; top: 15px; right: 15px; color: #ef4444; background: none; border: none; font-weight: bold; z-index: 101; }
         }
 
-        /* MAIN CONTENT */
         .main-content { flex: 1; display: none; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg); position: relative; }
         .main-content.active { display: flex; }
         .header { height: 50px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; flex-shrink: 0; }
         .title { font-size: 1.2rem; font-weight: 800; color: var(--text); margin: 0; }
-        .user-info { font-size: 0.8rem; color: #64748b; font-weight: 600; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        .status-open { background: #dcfce7; color: #166534; }
+        .status-closed { background: #fee2e2; color: #991b1b; }
 
-        /* POS & GENERAL UI */
+        /* POS */
         .pos-container { display: flex; flex: 1; overflow: hidden; }
-        @media (max-width: 768px) { 
-            .main-content { height: calc(100dvh - var(--nav-height-mobile)); } 
-            .pos-container { flex-direction: column; } 
-            .products-area { height: 60%; } 
-            .cart-area { height: 40%; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); z-index: 50; }
-        }
+        @media (max-width: 768px) { .main-content { height: calc(100dvh - var(--nav-height-mobile)); } .pos-container { flex-direction: column; } .products-area { height: 60%; } .cart-area { height: 40%; z-index: 50; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); } }
         @media (min-width: 769px) { .products-area { flex: 1; } .cart-area { width: 380px; border-left: 1px solid var(--border); } }
 
-        .products-area { padding: 15px; overflow-y: auto; background: #f1f5f9; display: flex; flex-direction: column; gap: 10px; }
-        .cart-area { background: var(--surface); display: flex; flex-direction: column; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; padding-bottom: 20px; }
+        .products-area { padding: 15px; overflow-y: auto; background: #f1f5f9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
         .card { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; }
-        .card:active { transform: scale(0.96); border-color: var(--primary); }
+        .card:active { border-color: var(--primary); transform: scale(0.98); }
         .badge-stock { position: absolute; top: 5px; right: 5px; font-size: 0.65rem; background: #e2e8f0; padding: 2px 5px; border-radius: 4px; }
-        .card-price { font-weight: 800; color: var(--primary); margin-top: 5px; }
-
+        
+        .cart-area { background: var(--surface); display: flex; flex-direction: column; }
         .cart-list { flex: 1; overflow-y: auto; padding: 10px; }
         .cart-footer { padding: 15px; border-top: 1px solid var(--border); background: white; }
         .btn-pay { width: 100%; background: var(--success); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         .btn-pay:disabled { background: #cbd5e1; cursor: not-allowed; }
 
-        /* CONFIG & ADMIN UI */
-        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 15px; overflow-y: auto; height: 100%; }
-        .config-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
-        .config-title { font-weight: 800; margin-bottom: 15px; color: var(--text); border-bottom: 2px solid var(--primary); padding-bottom: 5px; display: inline-block; }
+        /* CAJA & GENERAL */
+        .page-container { padding: 15px; overflow-y: auto; height: 100%; }
+        .form-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: white; padding: 12px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat-val { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .input-group { margin-bottom: 10px; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+        .btn-primary { background: var(--primary); color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-danger { background: var(--danger); color: white; border:none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 500px; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8fafc; color: #64748b; }
-        
-        /* GENERAL INPUTS */
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 0.75rem; margin-bottom: 3px; font-weight: 600; color: #64748b; }
-        .input-group input, .input-group select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
-        .btn-primary { background: var(--primary); color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-danger { background: var(--danger); color: white; border:none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .table-wrap { overflow-x: auto; }
 
         /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; }
-        .modal-body { padding: 20px; }
-        .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .pay-btn { padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .modal-box { background: white; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; }
+        .pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .pay-btn { padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: white; font-weight: bold; cursor: pointer; }
 
-        /* HIDDEN PRINT */
         #print-area { display: none; }
         @media print { @page { margin: 0; } body * { visibility: hidden; } #print-area, #print-area * { visibility: visible; } #print-area { position: absolute; left: 0; top: 0; width: 100%; font-family: monospace; font-size: 12px; padding: 10px; } }
     </style>
@@ -130,150 +110,137 @@
 
     <div id="login-screen">
         <div class="login-box">
-            <div class="login-title">MARKET POS</div>
+            <h2 style="color:var(--primary); margin-bottom:20px;">MARKET POS</h2>
             <input type="text" id="loginUser" class="login-input" placeholder="Usuario (admin)">
             <input type="password" id="loginPass" class="login-input" placeholder="Contraseña (1234)">
             <button class="login-btn" onclick="login()">INGRESAR</button>
-            <p style="margin-top:10px; font-size:0.8rem; color:#64748b;">v18.0 Seguridad & Roles</p>
         </div>
     </div>
 
     <div id="app-layout">
-        
-        <nav class="sidebar" id="sidebarMenu">
-            </nav>
+        <nav class="sidebar" id="sidebarMenu"></nav>
 
         <section id="pos" class="main-content">
             <div class="header">
-                <div class="title">Market</div>
-                <div class="user-info" id="userInfoDisplay">Admin</div>
-                <button class="btn-danger logout-btn" onclick="logout()" style="display:none">Salir</button> </div>
+                <div class="title">Ventas</div>
+                <div class="status-badge status-closed" id="posBadge">Cerrado</div>
+                <button class="logout-btn btn-danger" onclick="logout()" style="display:none">Salir</button>
+            </div>
             <div class="pos-container">
                 <div class="products-area">
-                    <input type="text" id="posSearch" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;" placeholder="🔍 Buscar...">
+                    <input type="text" id="posSearch" placeholder="🔍 Buscar..." class="login-input" style="margin-bottom:10px;">
                     <div class="grid" id="posGrid"></div>
                 </div>
                 <div class="cart-area">
-                    <div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Ticket Actual</div>
+                    <div style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">Ticket</div>
                     <div class="cart-list" id="cartItems"></div>
                     <div class="cart-footer">
                         <div style="display:flex; justify-content:space-between; font-size:1.2rem; font-weight:bold; margin-bottom:10px;">
                             <span>Total</span><span>S/ <span id="cartTotal">0.00</span></span>
                         </div>
-                        <button id="btnPay" class="btn-pay" onclick="openPayModal()">COBRAR</button>
+                        <button id="btnPay" class="btn-pay" onclick="openPayModal()" disabled>COBRAR</button>
                     </div>
                 </div>
             </div>
         </section>
 
         <section id="caja" class="main-content">
-            <div class="header"><div class="title">Caja</div></div>
-            <div style="padding:15px; overflow-y:auto; height:100%;">
+            <div class="header"><div class="title">Caja</div><div class="status-badge status-closed" id="cajaBadge">Cerrado</div></div>
+            <div class="page-container">
                 <div id="cajaClosed" class="form-card" style="text-align:center;">
-                    <h3>🔐 Caja Cerrada</h3>
-                    <input type="number" id="initAmount" placeholder="Fondo Inicial S/" style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:10px;">
-                    <button class="btn-primary" onclick="openSession()">ABRIR</button>
+                    <h3>🔐 Apertura de Turno</h3>
+                    <input type="number" id="initAmount" placeholder="Fondo Inicial (S/)" class="login-input">
+                    <button class="btn-primary" style="width:100%" onclick="openSession()">ABRIR CAJA</button>
                 </div>
+
                 <div id="cajaOpen" style="display:none;">
+                    <div class="stats-grid">
+                        <div class="stat-box"><div>Inicio</div><div class="stat-val" style="color:#64748b" id="valInit">0.00</div></div>
+                        <div class="stat-box"><div>Ventas Totales</div><div class="stat-val" style="color:var(--primary)" id="valSalesTotal">0.00</div></div>
+                        <div class="stat-box"><div>Movimientos</div><div class="stat-val" style="color:var(--warning)" id="valMoves">0.00</div></div>
+                        <div class="stat-box" style="background:#f0fdfa; border-color:var(--success)"><div>En Caja (Efectivo)</div><div class="stat-val" style="color:var(--success)" id="valExpected">0.00</div></div>
+                    </div>
+
                     <div class="form-card">
-                        <h4>Resumen</h4>
-                        <p>Ventas: S/ <span id="valSalesTotal">0.00</span> | En Caja: S/ <span id="valExpected">0.00</span></p>
+                        <h4>📝 Registrar Movimiento</h4>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <select id="moveType" style="flex:1;"><option value="out">🔴 Gasto / Salida</option><option value="in">🟢 Ingreso / Sencillo</option></select>
+                            <input type="text" id="moveDesc" placeholder="Motivo" style="flex:2;">
+                            <input type="number" id="moveAmount" placeholder="Monto" style="width:80px;">
+                            <button class="btn-primary" onclick="addMovement()">OK</button>
+                        </div>
+                        <div id="moveList" style="margin-top:10px; max-height:100px; overflow-y:auto; border-top:1px solid #eee; padding-top:5px; font-size:0.85rem;"></div>
                     </div>
+
                     <div class="form-card" style="border-left:4px solid var(--danger);">
-                        <h4>Cerrar Turno</h4>
-                        <input type="number" id="endAmount" placeholder="Efectivo Real" style="padding:8px;">
-                        <button class="btn-danger" onclick="closeSession()">Cerrar</button>
+                        <h4>🔒 Cierre de Turno</h4>
+                        <div style="display:flex; gap:10px; align-items:flex-end;">
+                            <div style="flex:1;"><label style="font-size:0.8rem; font-weight:bold;">Efectivo Real (Contado)</label><input type="number" id="endAmount" class="login-input" style="margin:0;"></div>
+                            <button class="btn-danger" style="height:46px; font-size:1rem;" onclick="closeSession()">CERRAR TURNO</button>
+                        </div>
                     </div>
+                </div>
+
+                <h3>Historial</h3>
+                <div class="table-wrap">
+                    <table><thead><tr><th>ID</th><th>Inicio</th><th>Fin</th><th>Ventas</th><th>Dif.</th><th>Reporte</th></tr></thead><tbody id="sessionHistory"></tbody></table>
                 </div>
             </div>
         </section>
 
         <section id="inv" class="main-content">
             <div class="header"><div class="title">Inventario</div></div>
-            <div style="padding:15px; overflow-y:auto; height:100%;">
+            <div class="page-container">
                 <div class="form-card">
-                    <h4>Nuevo Producto</h4>
                     <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                        <input id="nId" placeholder="ID" style="width:70px;">
-                        <input id="nName" placeholder="Nombre" style="flex:1;">
-                        <input id="nPrice" placeholder="$" style="width:60px;">
-                        <input id="nStock" placeholder="#" style="width:50px;">
-                        <button class="btn-primary" onclick="addProd()">+</button>
+                        <input id="nId" placeholder="ID" style="width:60px;">
+                        <input id="nName" placeholder="Producto" style="flex:1;">
+                        <input id="nPrice" placeholder="$" type="number" style="width:60px;">
+                        <input id="nStock" placeholder="#" type="number" style="width:50px;">
+                        <button class="btn-primary" onclick="addProd()">Crear</button>
                     </div>
                 </div>
-                <div style="overflow-x:auto;">
-                    <table><thead><tr><th>Prod</th><th>$</th><th>Stk</th><th>Acc</th></tr></thead><tbody id="tInv"></tbody></table>
-                </div>
+                <div class="table-wrap"><table><thead><tr><th>Prod</th><th>$</th><th>Stk</th><th>Acc</th></tr></thead><tbody id="tInv"></tbody></table></div>
             </div>
         </section>
 
         <section id="audit" class="main-content">
             <div class="header"><div class="title">Kardex</div></div>
-            <div style="padding:15px; overflow-y:auto; height:100%;">
-                <div style="overflow-x:auto;">
-                    <table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Usr</th></tr></thead><tbody id="tAudit"></tbody></table>
-                </div>
+            <div class="page-container">
+                <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Usr</th></tr></thead><tbody id="tAudit"></tbody></table></div>
             </div>
         </section>
 
         <section id="rep" class="main-content">
             <div class="header"><div class="title">Reportes</div></div>
-            <div style="padding:15px; overflow-y:auto; height:100%;">
-                <div style="overflow-x:auto;">
-                    <table><thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Metodo</th></tr></thead><tbody id="tRep"></tbody></table>
-                </div>
+            <div class="page-container">
+                <div class="table-wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Total</th><th>Pago</th></tr></thead><tbody id="tRep"></tbody></table></div>
             </div>
         </section>
 
         <section id="config" class="main-content">
-            <div class="header"><div class="title">Configuración</div></div>
-            <div class="config-grid">
-                
-                <div class="config-card">
-                    <div class="config-title">Roles y Permisos</div>
-                    <div class="input-group">
-                        <input type="text" id="newRoleName" placeholder="Nombre Rol (Ej: Cajero)">
-                    </div>
-                    <div style="font-size:0.85rem; margin-bottom:10px;">
-                        <label><input type="checkbox" class="perm-chk" value="pos"> Ventas</label>
-                        <label><input type="checkbox" class="perm-chk" value="caja"> Caja</label>
-                        <label><input type="checkbox" class="perm-chk" value="inv"> Stock</label>
-                        <label><input type="checkbox" class="perm-chk" value="audit"> Kardex</label>
-                        <label><input type="checkbox" class="perm-chk" value="rep"> Reportes</label>
-                        <label><input type="checkbox" class="perm-chk" value="config"> Admin</label>
-                    </div>
-                    <button class="btn-primary" onclick="addRole()">Crear Rol</button>
-                    <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
-                    <table id="roleTable"><thead><tr><th>Rol</th><th>Permisos</th><th>X</th></tr></thead><tbody></tbody></table>
+            <div class="header"><div class="title">Config</div></div>
+            <div class="page-container">
+                <div class="form-card">
+                    <h4>Usuarios</h4>
+                    <input id="uName" placeholder="Usuario"> <input id="uPass" placeholder="Clave">
+                    <button class="btn-primary" onclick="addUser()">Crear</button>
+                    <div id="userList" style="margin-top:10px;"></div>
                 </div>
-
-                <div class="config-card">
-                    <div class="config-title">Usuarios</div>
-                    <div class="input-group"><input type="text" id="uName" placeholder="Usuario"></div>
-                    <div class="input-group"><input type="password" id="uPass" placeholder="Contraseña"></div>
-                    <div class="input-group">
-                        <select id="uRole"></select>
-                    </div>
-                    <button class="btn-primary" onclick="addUser()">Crear Usuario</button>
-                    <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
-                    <table id="userTable"><thead><tr><th>User</th><th>Rol</th><th>X</th></tr></thead><tbody></tbody></table>
-                </div>
-
             </div>
         </section>
-
     </div>
 
     <div id="payModal" class="modal-overlay">
         <div class="modal-box">
-            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><b>Pagar</b><span onclick="closePayModal()">×</span></div>
-            <div class="modal-body">
-                <div class="pay-methods">
-                    <button class="pay-btn" onclick="confirmSale('Efectivo')">💵 Efec</button>
-                    <button class="pay-btn" onclick="confirmSale('Yape')">📱 Yape</button>
-                    <button class="pay-btn" onclick="confirmSale('Plin')">🔄 Plin</button>
-                    <button class="pay-btn" onclick="confirmSale('Tarjeta')">💳 Tarj</button>
-                </div>
+            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <b>Total: S/ <span id="payTotalDisplay">0.00</span></b> <span onclick="closePayModal()" style="font-size:1.5rem;cursor:pointer;">×</span>
+            </div>
+            <div class="pay-methods">
+                <button class="pay-btn" onclick="confirmSale('Efectivo')">💵 Efectivo</button>
+                <button class="pay-btn" onclick="confirmSale('Yape')">📱 Yape</button>
+                <button class="pay-btn" onclick="confirmSale('Plin')">🔄 Plin</button>
+                <button class="pay-btn" onclick="confirmSale('Tarjeta')">💳 Tarjeta</button>
             </div>
         </div>
     </div>
@@ -281,219 +248,146 @@
     <div id="print-area"></div>
 
     <script>
-        // --- BASE DE DATOS INICIAL ---
-        const defaultRoles = [
-            { id: 1, name: 'Admin', perms: ['pos','caja','inv','audit','rep','config'] },
-            { id: 2, name: 'Vendedor', perms: ['pos','caja'] }
-        ];
-        const defaultUsers = [
-            { id: 1, name: 'admin', pass: '1234', roleId: 1 }
-        ];
-
-        // --- DATA STORE ---
-        let db = JSON.parse(localStorage.getItem('pos_db_v18')) || [{id:101, name:"Agua 500ml", price:1.50, stock:50, category:"Bebidas", type:"product"}];
-        let users = JSON.parse(localStorage.getItem('pos_users_v18')) || defaultUsers;
-        let roles = JSON.parse(localStorage.getItem('pos_roles_v18')) || defaultRoles;
-        let sales = JSON.parse(localStorage.getItem('pos_sales_v18')) || [];
-        let sessions = JSON.parse(localStorage.getItem('pos_sessions_v18')) || [];
-        let kardex = JSON.parse(localStorage.getItem('pos_kardex_v18')) || [];
+        // --- DB ---
+        const defRoles = [{id:1,name:'Admin',perms:['pos','caja','inv','audit','rep','config']},{id:2,name:'Cajero',perms:['pos','caja']}];
+        const defUsers = [{id:1,name:'admin',pass:'1234',roleId:1}];
         
-        let currentUser = null;
-        let currentRole = null;
-        let cart = [];
+        let db = JSON.parse(localStorage.getItem('pos_db_v19')) || [{id:101,name:"Agua 500ml",price:1.5,stock:50,type:'product'}];
+        let users = JSON.parse(localStorage.getItem('pos_users_v19')) || defUsers;
+        let roles = JSON.parse(localStorage.getItem('pos_roles_v19')) || defRoles;
+        let sales = JSON.parse(localStorage.getItem('pos_sales_v19')) || [];
+        let sessions = JSON.parse(localStorage.getItem('pos_sessions_v19')) || [];
+        let kardex = JSON.parse(localStorage.getItem('pos_kardex_v19')) || [];
+        
+        let curUser=null, curRole=null, cart=[], curTab='pos';
 
-        // --- AUTHENTICATION ---
-        function login() {
-            const u = document.getElementById('loginUser').value;
-            const p = document.getElementById('loginPass').value;
-            const foundUser = users.find(user => user.name === u && user.pass === p);
-
-            if (foundUser) {
-                currentUser = foundUser;
-                currentRole = roles.find(r => r.id == foundUser.roleId);
-                
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-layout').style.display = 'flex';
-                document.getElementById('userInfoDisplay').innerText = `${currentUser.name} (${currentRole.name})`;
-                
-                buildSidebar();
-                
-                // Redirigir a la primera pestaña permitida
-                if(currentRole.perms.includes('pos')) nav('pos');
-                else nav(currentRole.perms[0]);
-
-            } else {
-                alert("Credenciales incorrectas");
-            }
+        // --- AUTH ---
+        function login(){
+            const u=document.getElementById('loginUser').value, p=document.getElementById('loginPass').value;
+            const usr=users.find(x=>x.name===u && x.pass===p);
+            if(usr){
+                curUser=usr; curRole=roles.find(r=>r.id==usr.roleId);
+                document.getElementById('login-screen').style.display='none';
+                document.getElementById('app-layout').style.display='flex';
+                buildNav();
+                nav(curRole.perms[0]);
+            }else alert("Error");
         }
-
-        function logout() {
-            location.reload();
-        }
-
-        function buildSidebar() {
-            const menu = document.getElementById('sidebarMenu');
-            menu.innerHTML = '';
-            
-            const modules = [
-                {id: 'pos', icon: '🛒', label: 'Ventas'},
-                {id: 'caja', icon: '🏪', label: 'Caja'},
-                {id: 'inv', icon: '📦', label: 'Stock'},
-                {id: 'audit', icon: '👁️', label: 'Kardex'},
-                {id: 'rep', icon: '📊', label: 'Reporte'},
-                {id: 'config', icon: '⚙️', label: 'Config'}
-            ];
-
-            modules.forEach(mod => {
-                if (currentRole.perms.includes(mod.id)) {
-                    const btn = document.createElement('button');
-                    btn.className = 'nav-btn';
-                    btn.onclick = () => nav(mod.id);
-                    btn.innerHTML = `<i>${mod.icon}</i><span>${mod.label}</span>`;
-                    menu.appendChild(btn);
+        function logout(){ location.reload(); }
+        
+        function buildNav(){
+            const menu=document.getElementById('sidebarMenu'); menu.innerHTML='';
+            const mods=[{id:'pos',i:'🛒',l:'Ventas'},{id:'caja',i:'🏪',l:'Caja'},{id:'inv',i:'📦',l:'Stock'},{id:'audit',i:'👁️',l:'Kardex'},{id:'rep',i:'📊',l:'Rep'},{id:'config',i:'⚙️',l:'Conf'}];
+            mods.forEach(m=>{
+                if(curRole.perms.includes(m.id)){
+                    const b=document.createElement('button'); b.className='nav-btn'; b.onclick=()=>nav(m.id); b.innerHTML=`<i>${m.i}</i><span>${m.l}</span>`;
+                    menu.appendChild(b);
                 }
             });
-
-            // Botón de salir para desktop
-            if(window.innerWidth > 768) {
-                const logoutBtn = document.createElement('button');
-                logoutBtn.className = 'nav-btn logout-btn';
-                logoutBtn.onclick = logout;
-                logoutBtn.innerHTML = `<i>🚪</i><span>Salir</span>`;
-                menu.appendChild(logoutBtn);
-            }
+            if(window.innerWidth>768) menu.innerHTML+=`<button class="nav-btn logout-btn" onclick="logout()"><i>🚪</i><span>Salir</span></button>`;
         }
 
-        function nav(t) {
-            document.querySelectorAll('.main-content').forEach(e => e.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
-            
-            if (document.getElementById(t)) {
+        function nav(t){
+            document.querySelectorAll('.main-content').forEach(e=>e.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
+            if(document.getElementById(t)){
                 document.getElementById(t).classList.add('active');
-                // Encontrar botón correspondiente
-                const btns = document.querySelectorAll('.nav-btn');
-                btns.forEach(b => { if(b.innerHTML.includes(t=='pos'?'Ventas':t=='caja'?'Caja':t=='inv'?'Stock':t=='audit'?'Kardex':t=='rep'?'Reporte':'Config')) b.classList.add('active'); });
-                
-                if(t==='pos') { renderPOS(); }
-                if(t==='caja') checkCaja();
-                if(t==='inv') renderInv();
-                if(t==='audit') renderKardex();
-                if(t==='rep') renderRep();
-                if(t==='config') renderConfig();
+                const btn=Array.from(document.querySelectorAll('.nav-btn')).find(b=>b.innerHTML.includes(t=='pos'?'Ventas':t=='caja'?'Caja':t=='inv'?'Stock':t=='audit'?'Kardex':t=='rep'?'Rep':'Conf'));
+                if(btn) btn.classList.add('active');
+                if(t=='pos')renderPOS(); if(t=='caja')checkCaja(); if(t=='inv')renderInv(); if(t=='audit')renderAudit(); if(t=='rep')renderRep(); if(t=='config')renderConfig();
             }
         }
 
-        // --- CORE POS LOGIC ---
-        function renderPOS() {
-            const q = document.getElementById('posSearch').value.toLowerCase();
-            document.getElementById('posGrid').innerHTML = db.filter(p => p.name.toLowerCase().includes(q)).map(p => `
-                <div class="card ${p.type==='product'&&p.stock<=0?'no-stock':''}" onclick="if(${p.type==='service'||p.stock>0}) addToCart(${p.id})">
-                    <div class="badge-stock">${p.type==='service'?'Srv':p.stock}</div>
-                    <div style="font-weight:bold;margin-top:5px;font-size:0.9rem;">${p.name}</div>
-                    <div class="card-price">S/ ${p.price.toFixed(2)}</div>
+        // --- POS ---
+        function renderPOS(){
+            const q=document.getElementById('posSearch').value.toLowerCase();
+            document.getElementById('posGrid').innerHTML=db.filter(p=>p.name.toLowerCase().includes(q)).map(p=>`
+                <div class="card ${p.stock<=0?'no-stock':''}" onclick="if(${p.stock>0})addCart(${p.id})">
+                    <div class="badge-stock">${p.stock}</div>
+                    <div style="font-weight:bold;font-size:0.9rem;">${p.name}</div>
+                    <div class="price-tag">S/ ${p.price.toFixed(2)}</div>
                 </div>`).join('');
         }
-        function addToCart(id) {
-            const p = db.find(x => x.id === id), i = cart.find(x => x.id === id);
-            if(p.type==='product' && i && i.qty>=p.stock) return alert("Max Stock");
+        function addCart(id){
+            const i=cart.find(x=>x.id===id), p=db.find(x=>x.id===id);
+            if(i && i.qty>=p.stock) return alert("Max stock");
             if(i) i.qty++; else cart.push({...p, qty:1});
             renderCart();
         }
-        function renderCart() {
-            let t = 0;
-            document.getElementById('cartItems').innerHTML = cart.map(i => {
-                t += i.price * i.qty;
-                return `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed #eee;align-items:center;">
-                    <div>${i.name}</div>
-                    <div style="display:flex;gap:5px;align-items:center;"><input type="number" value="${i.qty}" style="width:30px;text-align:center;" onchange="updQty(${i.id},this.value)"> <b>${(i.price*i.qty).toFixed(2)}</b> <span onclick="updQty(${i.id},0)" style="color:red;cursor:pointer;">×</span></div>
-                </div>`;
-            }).join('');
-            document.getElementById('cartTotal').innerText = t.toFixed(2);
+        function renderCart(){
+            let t=0; document.getElementById('cartItems').innerHTML=cart.map(i=>{ t+=i.price*i.qty; return `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed #eee;"><span>${i.name}</span><span>${i.qty} x ${i.price}</span></div>`}).join('');
+            document.getElementById('cartTotal').innerText=t.toFixed(2);
+            document.getElementById('btnPay').disabled = cart.length===0;
         }
-        function updQty(id,v) { v=parseInt(v); const p=db.find(x=>x.id===id), i=cart.find(x=>x.id===id); if(v<=0) cart=cart.filter(x=>x.id!==id); else { if(p.type==='product'&&v>p.stock)alert("Max"); else i.qty=v; } renderCart(); }
+        function openPayModal(){ document.getElementById('payTotalDisplay').innerText=document.getElementById('cartTotal').innerText; document.getElementById('payModal').classList.add('open'); }
+        function closePayModal(){ document.getElementById('payModal').classList.remove('open'); }
         
-        function openPayModal() { if(!cart.length)return alert("Vacío"); document.getElementById('payModal').classList.add('open'); }
-        function closePayModal() { document.getElementById('payModal').classList.remove('open'); }
-        
-        function confirmSale(m) {
-            const act = sessions.find(s=>s.status==='open'); if(!act) return alert("Caja cerrada");
-            const t = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-            act.salesTotal+=t; act.expected = act.init + act.salesTotal + act.moves;
-            const s = {id:Date.now(), date:new Date().toLocaleString(), items:[...cart], total:t, method:m, user:currentUser.name};
-            cart.forEach(c=>{ if(c.type==='product'){ const p=db.find(x=>x.id===c.id); p.stock-=c.qty; logKardex(p.id,p.name,'VENTA',-c.qty,p.stock,`Ticket #${s.id}`); }});
-            sales.push(s); saveData(); printTicket(s); cart=[]; renderCart(); renderPOS(); closePayModal();
+        function confirmSale(m){
+            const act=sessions.find(s=>s.status==='open'); if(!act)return alert("Caja cerrada");
+            const t=parseFloat(document.getElementById('cartTotal').innerText);
+            
+            // LOGICA CAJA RESTAURADA
+            act.salesTotal += t;
+            if(m==='Efectivo') act.salesCash = (act.salesCash||0) + t;
+            // Solo efectivo suma al cajon
+            act.expected = act.init + (act.salesCash||0) + act.moves;
+
+            const sale = {id:Date.now(), date:new Date().toLocaleString(), items:[...cart], total:t, method:m, user:curUser.name};
+            sales.push(sale);
+            
+            cart.forEach(c=>{ 
+                const p=db.find(x=>x.id===c.id); p.stock-=c.qty;
+                logKardex(p.id, p.name, 'VENTA', -c.qty, p.stock, `T-${sale.id}`);
+            });
+            
+            saveData(); printTicket(sale); cart=[]; renderCart(); renderPOS(); closePayModal(); checkCaja();
         }
 
         // --- CAJA ---
-        function checkCaja() {
+        function checkCaja(){
             const act = sessions.find(s=>s.status==='open');
-            document.getElementById('posBadge').className = act ? 'status-badge status-open' : 'status-badge status-closed';
-            document.getElementById('posBadge').innerText = act ? 'Abierto' : 'Cerrado';
-            document.getElementById('btnPay').disabled = !act;
-            if(act) {
+            const status = act ? 'Abierto' : 'Cerrado';
+            document.getElementById('posBadge').innerText = status; document.getElementById('posBadge').className = act?'status-badge status-open':'status-badge status-closed';
+            document.getElementById('cajaBadge').innerText = status; document.getElementById('cajaBadge').className = document.getElementById('posBadge').className;
+            
+            // Historial
+            document.getElementById('sessionHistory').innerHTML=[...sessions].reverse().map(s=>`
+                <tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.end?new Date(s.end).toLocaleTimeString():'-'}</td><td>S/ ${s.salesTotal.toFixed(2)}</td><td>${s.diff?s.diff.toFixed(2):'-'}</td><td><button class="btn-danger" style="padding:2px 5px;" onclick="pdf(${s.id})">PDF</button></td></tr>
+            `).join('');
+
+            if(act){
                 document.getElementById('cajaClosed').style.display='none'; document.getElementById('cajaOpen').style.display='block';
+                document.getElementById('valInit').innerText = act.init.toFixed(2);
                 document.getElementById('valSalesTotal').innerText = act.salesTotal.toFixed(2);
+                document.getElementById('valMoves').innerText = act.moves.toFixed(2);
                 document.getElementById('valExpected').innerText = act.expected.toFixed(2);
-            } else {
+                document.getElementById('moveList').innerHTML = (act.movements||[]).map(m=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid #eee;"><span>${m.desc}</span><span style="color:${m.type=='in'?'green':'red'}">${m.type=='in'?'+':'-'} ${m.amount}</span></div>`).join('');
+            }else{
                 document.getElementById('cajaClosed').style.display='block'; document.getElementById('cajaOpen').style.display='none';
             }
         }
-        function openSession(){ const v=parseFloat(document.getElementById('initAmount').value); if(isNaN(v))return; sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,moves:0,expected:v,status:'open'}); saveData(); checkCaja(); }
-        function closeSession(){ const act=sessions.find(s=>s.status==='open'); if(!act)return; act.status='closed'; saveData(); checkCaja(); }
-
-        // --- INV & CONFIG ---
-        function addProd(){
-            const n=document.getElementById('nName').value, p=parseFloat(document.getElementById('nPrice').value);
-            if(n&&p){ db.push({id:Date.now(), name:n, price:p, stock:parseInt(document.getElementById('nStock').value)||0, type:'product'}); logKardex(0,n,'CREAR',0,0,'Nuevo'); saveData(); renderInv(); }
+        function openSession(){ const v=parseFloat(document.getElementById('initAmount').value); if(isNaN(v))return; sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,salesCash:0,moves:0,expected:v,status:'open',movements:[]}); saveData(); checkCaja(); }
+        function addMovement(){ const act=sessions.find(s=>s.status=='open'); if(!act)return; const t=document.getElementById('moveType').value, d=document.getElementById('moveDesc').value, a=parseFloat(document.getElementById('moveAmount').value); if(!d||isNaN(a))return; act.moves+=(t=='in'?a:-a); act.movements.push({type:t,desc:d,amount:a}); saveData(); checkCaja(); document.getElementById('moveDesc').value=''; document.getElementById('moveAmount').value='';}
+        function closeSession(){ const act=sessions.find(s=>s.status=='open'); if(!act)return; const r=parseFloat(document.getElementById('endAmount').value); if(isNaN(r))return alert("Monto real?"); if(!confirm("Cerrar?"))return; act.real=r; act.diff=r-act.expected; act.end=new Date(); act.status='closed'; saveData(); pdf(act.id); checkCaja(); }
+        function pdf(sid){
+            const s=sessions.find(x=>x.id==sid); if(!s)return;
+            const h=`<div style="padding:20px;font-family:sans-serif;"><h3>CIERRE #${s.id}</h3><p>${new Date(s.start).toLocaleString()} - ${s.end?new Date(s.end).toLocaleString():'Act'}</p><hr><table><tr><td>Ventas Tot:</td><td align="right">${s.salesTotal.toFixed(2)}</td></tr><tr><td>Efec:</td><td align="right">${(s.salesCash||0).toFixed(2)}</td></tr></table><hr><table><tr><td>Inicio:</td><td align="right">${s.init.toFixed(2)}</td></tr><tr><td>Movs:</td><td align="right">${s.moves.toFixed(2)}</td></tr><tr><td><b>ESPERADO:</b></td><td align="right"><b>${s.expected.toFixed(2)}</b></td></tr><tr><td>REAL:</td><td align="right">${(s.real||0).toFixed(2)}</td></tr><tr><td>DIF:</td><td align="right">${(s.diff||0).toFixed(2)}</td></tr></table></div>`;
+            html2pdf().set({margin:5,filename:`Cierre_${s.id}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'80mm'}}).from(h).save();
         }
-        function renderInv(){ document.getElementById('tInv').innerHTML=db.map(p=>`<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td><td><button onclick="delProd(${p.id})">X</button></td></tr>`).join(''); }
+
+        // --- INV & OTHERS ---
+        function addProd(){ const n=document.getElementById('nName').value, p=parseFloat(document.getElementById('nPrice').value); if(n&&p){ db.push({id:Date.now(),name:n,price:p,stock:parseInt(document.getElementById('nStock').value)||0,type:'product'}); logKardex(0,n,'CREAR',0,0,'Nuevo'); saveData(); renderInv(); } }
+        function renderInv(){ document.getElementById('tInv').innerHTML=db.map(p=>`<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td><td><button class="btn-danger" onclick="delProd(${p.id})">X</button></td></tr>`).join(''); }
         function delProd(id){ if(confirm("Del?")){db=db.filter(x=>x.id!==id);saveData();renderInv();} }
-        function logKardex(id,n,t,q,s,no){ kardex.push({date:new Date().toLocaleString(), name:n, type:t, qty:q, stock:s, user:currentUser.name}); saveData(); }
-        function renderKardex(){ document.getElementById('tAudit').innerHTML=[...kardex].reverse().map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td>${k.qty}</td><td>${k.user}</td></tr>`).join(''); }
+        function logKardex(id,n,t,q,s,no){ kardex.push({date:new Date().toLocaleString(),name:n,type:t,qty:q,stock:s,usr:curUser.name}); saveData(); }
+        function renderAudit(){ document.getElementById('tAudit').innerHTML=[...kardex].reverse().map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td>${k.qty}</td><td>${k.usr}</td></tr>`).join(''); }
         function renderRep(){ document.getElementById('tRep').innerHTML=[...sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''); }
+        function renderConfig(){ document.getElementById('userList').innerHTML=users.map(u=>`<div>${u.name} (${roles.find(r=>r.id==u.roleId)?.name})</div>`).join(''); }
+        function addUser(){ const n=document.getElementById('uName').value, p=document.getElementById('uPass').value; if(n&&p){ users.push({id:Date.now(),name:n,pass:p,roleId:2}); saveData(); renderConfig(); } }
 
-        // --- CONFIG MODULE ---
-        function renderConfig() {
-            // Render Roles
-            document.getElementById('roleTable').querySelector('tbody').innerHTML = roles.map(r => `
-                <tr><td>${r.name}</td><td>${r.perms.length} perms</td><td>${r.id>2?`<button class="btn-danger" onclick="delRole(${r.id})">X</button>`:'-'}</td></tr>
-            `).join('');
-            
-            // Render Users
-            const roleSel = document.getElementById('uRole');
-            roleSel.innerHTML = roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
-            
-            document.getElementById('userTable').querySelector('tbody').innerHTML = users.map(u => `
-                <tr><td>${u.name}</td><td>${roles.find(r=>r.id==u.roleId)?.name}</td><td>${u.id>1?`<button class="btn-danger" onclick="delUser(${u.id})">X</button>`:'-'}</td></tr>
-            `).join('');
-        }
-
-        function addRole() {
-            const name = document.getElementById('newRoleName').value;
-            if(!name) return alert("Nombre requerido");
-            const perms = Array.from(document.querySelectorAll('.perm-chk:checked')).map(cb => cb.value);
-            roles.push({id:Date.now(), name, perms});
-            saveData(); renderConfig();
-        }
-        function delRole(id){ roles=roles.filter(r=>r.id!==id); saveData(); renderConfig(); }
-
-        function addUser() {
-            const n=document.getElementById('uName').value, p=document.getElementById('uPass').value, r=document.getElementById('uRole').value;
-            if(n&&p){ users.push({id:Date.now(), name:n, pass:p, roleId:r}); saveData(); renderConfig(); }
-        }
-        function delUser(id){ users=users.filter(u=>u.id!==id); saveData(); renderConfig(); }
-
-        function saveData(){ 
-            localStorage.setItem('pos_db_v18',JSON.stringify(db)); 
-            localStorage.setItem('pos_sales_v18',JSON.stringify(sales)); 
-            localStorage.setItem('pos_sessions_v18',JSON.stringify(sessions)); 
-            localStorage.setItem('pos_kardex_v18',JSON.stringify(kardex));
-            localStorage.setItem('pos_users_v18',JSON.stringify(users));
-            localStorage.setItem('pos_roles_v18',JSON.stringify(roles));
-        }
-        function printTicket(s){ document.getElementById('print-area').innerHTML=`<div style="width:250px;font-family:monospace;font-size:12px;"><h3>MARKET</h3>Ticket #${s.id}<br>${s.date}<hr>${s.items.map(i=>`<div>${i.qty} ${i.name} ${i.price*i.qty}</div>`).join('')}<hr>Tot:${s.total}<br>Cajero: ${s.user}</div>`; window.print(); }
-
-        // Init Events
+        function saveData(){ localStorage.setItem('pos_db_v19',JSON.stringify(db)); localStorage.setItem('pos_sales_v19',JSON.stringify(sales)); localStorage.setItem('pos_sessions_v19',JSON.stringify(sessions)); localStorage.setItem('pos_kardex_v19',JSON.stringify(kardex)); localStorage.setItem('pos_users_v19',JSON.stringify(users)); }
+        function printTicket(s){ document.getElementById('print-area').innerHTML=`<div style="width:200px;font-family:monospace;font-size:12px;">MARKET<br>Ticket #${s.id}<br>${s.date}<hr>${s.items.map(i=>`${i.qty} ${i.name} ${i.price*i.qty}`).join('<br>')}<hr>Tot: S/ ${s.total.toFixed(2)}<br>Pago: ${s.method}<br>Cajero: ${s.user}</div>`; window.print(); }
+        
         document.getElementById('posSearch').addEventListener('keyup', renderPOS);
     </script>
 </body>
