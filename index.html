@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Market POS v26: Gestión Usuarios Pro</title>
+    <title>Market POS v27: Cajas Independientes</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -27,10 +27,10 @@
         /* LOGIN */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
-            background: url('https://images.unsplash.com/photo-1534723452862-4c874018d66d?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+            background: url('https://images.unsplash.com/photo-1578916171728-56c7ed08d90c?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
             display: flex; align-items: center; justify-content: center;
         }
-        #login-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px); }
+        #login-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
         .login-card { position: relative; background: rgba(255, 255, 255, 0.95); padding: 2.5rem; border-radius: 1rem; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .login-title { font-size: 1.8rem; font-weight: 900; color: var(--primary); margin-bottom: 5px; }
         .login-input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
@@ -91,6 +91,10 @@
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         th { background: #f8fafc; font-weight: 600; color: #64748b; }
 
+        /* CONFIG PANEL */
+        .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .role-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #e0e7ff; color: var(--primary); font-size: 0.8rem; margin: 2px; }
+
         /* MODALS */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
         .modal-overlay.open { display: flex; }
@@ -107,7 +111,7 @@
     <div id="login-screen">
         <div class="login-card">
             <div class="login-title">MARKET POS</div>
-            <div class="login-subtitle">Sistema de Ventas</div>
+            <div style="color:#64748b; margin-bottom:20px;">v27.0 Multi-Caja</div>
             <input type="text" id="user" class="login-input" placeholder="Usuario">
             <input type="password" id="pass" class="login-input" placeholder="Contraseña">
             <button class="login-btn" onclick="app.login()">INICIAR SESIÓN</button>
@@ -118,16 +122,22 @@
         <nav class="sidebar" id="mainNav"></nav>
 
         <section id="pos" class="main-content">
-            <div class="header"><span class="title">Ventas</span><span class="badge closed" id="posStatus">Cerrado</span></div>
+            <div class="header">
+                <span class="title">Ventas</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <small id="userDisplay" style="color:#64748b; font-weight:bold;"></small>
+                    <span class="badge closed" id="posStatus">Cerrado</span>
+                </div>
+            </div>
             <div class="pos-container">
                 <div id="posLock" class="pos-locked-overlay">
                     <div style="font-size:3rem;margin-bottom:10px">🔒</div>
-                    <h3>Caja Cerrada</h3><p>Abre turno para vender</p>
-                    <button class="btn-primary" onclick="app.nav('caja')">IR A CAJA</button>
+                    <h3>Caja Cerrada</h3><p>Tu usuario no tiene turno abierto.</p>
+                    <button class="btn-primary" onclick="app.nav('caja')">ABRIR MI CAJA</button>
                 </div>
                 <div class="products-area">
                     <div style="display:flex; gap:10px;">
-                        <input type="text" id="search" class="input-control" placeholder="🔍 Buscar..." onkeyup="app.renderPOS()" style="margin:0;">
+                        <input type="text" id="search" class="input-control" placeholder="🔍 Buscar nombre o código..." onkeyup="app.renderPOS()" style="margin:0;">
                         <button class="btn-primary" style="padding:10px; width:50px;" onclick="app.startScanner('pos')">📷</button>
                     </div>
                     <div class="grid" id="posGrid" style="margin-top: 15px;"></div>
@@ -146,15 +156,17 @@
         </section>
 
         <section id="caja" class="main-content">
-            <div class="header"><span class="title">Caja</span><span class="badge closed" id="cajaStatus">Cerrado</span></div>
+            <div class="header"><span class="title">Mi Caja</span><span class="badge closed" id="cajaStatus">Cerrado</span></div>
             <div class="page-content">
                 <div id="viewClosed" class="card-box" style="text-align:center;">
-                    <h3>🔐 Apertura</h3><input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial S/">
+                    <h3>🔐 Iniciar Turno Personal</h3>
+                    <p>Cada usuario tiene su propia caja independiente.</p>
+                    <input type="number" id="initCash" class="input-control" placeholder="Fondo Inicial S/">
                     <button class="btn-primary" style="width:100%" onclick="app.openBox()">ABRIR CAJA</button>
                 </div>
                 <div id="viewOpen" style="display:none;">
                     <div class="card-box" style="background:#f0fdfa; border-color:var(--success); text-align:center;">
-                        <h2 style="color:var(--success); margin:0;">S/ <span id="lblCash">0.00</span></h2><p style="margin:0;color:#64748b;">En Caja</p>
+                        <h2 style="color:var(--success); margin:0;">S/ <span id="lblCash">0.00</span></h2><p style="margin:0;color:#64748b;">En Caja (Usuario Actual)</p>
                     </div>
                     <div class="card-box">
                         <h4>Movimientos</h4>
@@ -170,15 +182,17 @@
                         <h4>Cierre</h4>
                         <div style="display:flex; gap:10px; align-items:flex-end;">
                             <div style="flex:1;"><input type="number" id="realCash" class="input-control" placeholder="Efectivo Real" style="margin:0;"></div>
-                            <button class="btn-danger" style="height:42px;" onclick="app.closeBox()">CERRAR</button>
+                            <button class="btn-danger" style="height:42px;" onclick="app.closeBox()">CERRAR MI TURNO</button>
                         </div>
                     </div>
                 </div>
+                <h3>Mis Cierres Pasados</h3>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Inicio</th><th>Ventas</th><th>Dif.</th><th>PDF</th></tr></thead><tbody id="boxHistory"></tbody></table></div>
             </div>
         </section>
 
         <section id="inv" class="main-content">
-            <div class="header"><span class="title">Inventario</span></div>
+            <div class="header"><span class="title">Inventario Global</span></div>
             <div class="page-content">
                 <div class="card-box">
                     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
@@ -190,7 +204,7 @@
                         </div>
                         <input id="pName" placeholder="Nombre" class="input-control" style="flex:1; margin:0;">
                         <input id="pPrice" placeholder="S/" type="number" class="input-control" style="width:80px; margin:0;">
-                        <input id="pStock" placeholder="#" type="number" class="input-control" style="width:70px; margin:0;">
+                        <input id="pStock" placeholder="Stock" type="number" class="input-control" style="width:70px; margin:0;">
                         <input id="pMin" placeholder="Min" type="number" class="input-control" style="width:60px; margin:0;">
                         <select id="pType" class="input-control" style="width:100px; margin:0;" onchange="app.toggleStockInputs()"><option value="product">Prod</option><option value="service">Serv</option></select>
                         <button class="btn-primary" style="height:42px;" onclick="app.addProd()">+</button>
@@ -224,7 +238,7 @@
                         <input id="uUser" class="input-control" placeholder="Usuario" style="flex:1;">
                         <input id="uPass" class="input-control" placeholder="Clave" style="width:120px;">
                         <select id="uRole" class="input-control" style="width:150px;"></select>
-                        <button class="btn-primary" onclick="app.addUser()">Crear</button>
+                        <button class="btn-primary" onclick="app.addUser()">Crear Usuario</button>
                     </div>
                     <div class="table-wrap">
                         <table><thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead><tbody id="usersTable"></tbody></table>
@@ -233,8 +247,8 @@
             </div>
         </section>
         
-        <section id="audit" class="main-content"><div class="header"><span class="title">Kardex</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Stk</th><th>Usr</th></tr></thead><tbody id="auditTable"></tbody></table></div></div></section>
-        <section id="rep" class="main-content"><div class="header"><span class="title">Reportes</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Pago</th></tr></thead><tbody id="repTable"></tbody></table></div></div></section>
+        <section id="audit" class="main-content"><div class="header"><span class="title">Kardex Global</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Prod</th><th>Mov</th><th>Cant</th><th>Stk</th><th>Usr</th></tr></thead><tbody id="auditTable"></tbody></table></div></div></section>
+        <section id="rep" class="main-content"><div class="header"><span class="title">Reportes Globales</span></div><div class="page-content"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Fecha</th><th>Total</th><th>Pago</th></tr></thead><tbody id="repTable"></tbody></table></div></div></section>
     </div>
 
     <div id="editModal" class="modal-overlay">
@@ -296,12 +310,12 @@
     <script>
         const app = {
             data: {
-                roles: JSON.parse(localStorage.getItem('pos_roles_v26')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep','audit']},{id:2, name:'Cajero', perms:['pos','caja']}],
-                users: JSON.parse(localStorage.getItem('pos_users_v26')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
-                db: JSON.parse(localStorage.getItem('pos_db_v26')) || [{id:101, name:"Agua 500ml", price:1.5, stock:50, min:10, type:'product'}],
-                sales: JSON.parse(localStorage.getItem('pos_sales_v26')) || [],
-                sessions: JSON.parse(localStorage.getItem('pos_sessions_v26')) || [],
-                kardex: JSON.parse(localStorage.getItem('pos_kardex_v26')) || [],
+                roles: JSON.parse(localStorage.getItem('pos_roles_v27')) || [{id:1, name:'Admin', perms:['pos','caja','inv','conf','rep','audit']},{id:2, name:'Cajero', perms:['pos','caja']}],
+                users: JSON.parse(localStorage.getItem('pos_users_v27')) || [{id:1, user:'admin', pass:'1234', roleId:1}],
+                db: JSON.parse(localStorage.getItem('pos_db_v27')) || [{id:101, name:"Agua 500ml", price:1.5, stock:50, min:10, type:'product'}],
+                sales: JSON.parse(localStorage.getItem('pos_sales_v27')) || [],
+                sessions: JSON.parse(localStorage.getItem('pos_sessions_v27')) || [],
+                kardex: JSON.parse(localStorage.getItem('pos_kardex_v27')) || [],
                 cart: [], currentUser: null, scanner: null
             },
 
@@ -314,11 +328,16 @@
                     const role=app.data.roles.find(r=>r.id==usr.roleId);
                     document.getElementById('login-screen').style.display='none';
                     document.getElementById('app-layout').style.display='flex';
+                    document.getElementById('userDisplay').innerText = usr.user;
                     app.buildMenu(role);
-                    const act=app.data.sessions.find(s=>s.status=='open');
-                    if(!act && role.name=='Cajero') app.nav('caja');
-                    else app.nav(role.perms[0]);
+                    
+                    // INDEPENDENT BOX LOGIC CHECK
                     app.updateBoxState();
+                    const activeSession = app.getActiveSession(); // Finds session for CURRENT USER
+                    
+                    if(!activeSession && role.name === 'Cajero') app.nav('caja');
+                    else app.nav(role.perms[0]);
+
                 } else alert("Credenciales incorrectas");
             },
             buildMenu: (role) => {
@@ -341,6 +360,88 @@
                 if(id=='audit') app.renderKardex();
             },
 
+            // --- CAJA INDEPENDIENTE (NUEVO CORE) ---
+            getActiveSession: () => {
+                // Return session ONLY if it matches the current user
+                return app.data.sessions.find(s => s.status === 'open' && s.userId === app.data.currentUser.id);
+            },
+
+            updateBoxState: () => {
+                const act = app.getActiveSession();
+                const lock = document.getElementById('posLock');
+                const badge = document.getElementById('posStatus');
+                const badgeCaja = document.getElementById('cajaStatus');
+                const btnPay = document.getElementById('btnCheckout');
+
+                const statusText = act ? 'Abierto' : 'Cerrado';
+                const statusClass = act ? 'badge open' : 'badge closed';
+
+                badge.innerText = statusText; badge.className = statusClass;
+                badgeCaja.innerText = statusText; badgeCaja.className = statusClass;
+
+                if (act) {
+                    lock.classList.remove('active');
+                    btnPay.disabled = app.data.cart.length === 0;
+                } else {
+                    lock.classList.add('active');
+                    btnPay.disabled = true;
+                }
+            },
+
+            openBox: () => {
+                const v = parseFloat(document.getElementById('initCash').value);
+                if (isNaN(v)) return alert("Ingrese monto inicial");
+                
+                app.data.sessions.push({
+                    id: Date.now(),
+                    userId: app.data.currentUser.id, // VINCULAR A USUARIO
+                    userName: app.data.currentUser.user,
+                    start: new Date(), end: null,
+                    init: v, salesTotal: 0, salesCash: 0, salesYape: 0, salesPlin: 0, salesCard: 0,
+                    moves: 0, expected: v, real: 0, diff: 0, status: 'open', movements: []
+                });
+                
+                app.save(); app.checkBox(); app.updateBoxState(); app.nav('pos');
+            },
+
+            checkBox: () => {
+                const act = app.getActiveSession();
+                document.getElementById('viewClosed').style.display = act ? 'none' : 'block';
+                document.getElementById('viewOpen').style.display = act ? 'block' : 'none';
+
+                if (act) {
+                    document.getElementById('lblCash').innerText = act.expected.toFixed(2);
+                    document.getElementById('movList').innerHTML = (act.movements || []).map(m => `<div>${m.desc}: ${m.amount}</div>`).join('');
+                }
+                
+                // Mostrar solo historial de este usuario
+                const mySessions = app.data.sessions.filter(s => s.userId === app.data.currentUser.id).reverse();
+                
+                document.getElementById('boxHistory').innerHTML = mySessions.map(s => 
+                    `<tr><td>${s.id}</td><td>${new Date(s.start).toLocaleTimeString()}</td><td>${s.salesTotal.toFixed(2)}</td><td>${s.diff || '-'}</td><td><button class="btn-danger" style="padding:2px 5px;" onclick="app.downloadPDF(${s.id})">PDF</button></td></tr>`
+                ).join('');
+            },
+
+            addMove: () => {
+                const act = app.getActiveSession(); if(!act) return;
+                const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value);
+                if(!d || isNaN(a)) return;
+                const val = t === 'in' ? a : -a;
+                act.moves += val; act.expected += val;
+                act.movements.push({type:t, desc:d, amount:val});
+                app.save(); app.checkBox(); app.updateBoxState();
+                document.getElementById('movDesc').value = ''; document.getElementById('movAmnt').value = '';
+            },
+
+            closeBox: () => {
+                const act = app.getActiveSession(); if(!act) return;
+                const r = parseFloat(document.getElementById('realCash').value);
+                if(isNaN(r)) return alert("Ingrese monto real");
+                if(!confirm("¿Cerrar Turno?")) return;
+                act.real = r; act.diff = r - act.expected; act.end = new Date(); act.status = 'closed';
+                app.save(); app.downloadPDF(act.id); app.checkBox(); app.updateBoxState(); document.getElementById('realCash').value = '';
+            },
+
             // --- POS ---
             renderPOS: () => {
                 const q=document.getElementById('search').value.toLowerCase();
@@ -358,12 +459,13 @@
             renderCart: () => {
                 let t=0; document.getElementById('cartList').innerHTML=app.data.cart.map(i=>{ t+=i.price*i.qty; return `<div class="cart-item"><div>${i.name}<br><small>S/ ${i.price}</small></div><div style="display:flex;align-items:center;gap:5px;"><b>${i.qty}</b><button class="btn-danger" style="padding:2px 6px" onclick="app.remCart(${i.id})">x</button></div></div>`}).join('');
                 document.getElementById('cartTotal').innerText=t.toFixed(2);
-                document.getElementById('btnCheckout').disabled=app.data.cart.length===0;
+                const act = app.getActiveSession();
+                document.getElementById('btnCheckout').disabled = (app.data.cart.length===0 || !act);
             },
             remCart: (id) => { app.data.cart=app.data.cart.filter(x=>x.id!=id); app.renderCart(); },
             openPay: () => { document.getElementById('modalTotal').innerText=document.getElementById('cartTotal').innerText; document.getElementById('payModal').classList.add('open'); },
             pay: (m) => {
-                const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return alert('Caja cerrada');
+                const act=app.getActiveSession(); if(!act)return alert('Caja cerrada');
                 const t=parseFloat(document.getElementById('cartTotal').innerText);
                 act.salesTotal+=t; if(m=='Efectivo'){act.salesCash=(act.salesCash||0)+t; act.expected+=t;}
                 const sale={id:Date.now(), date:new Date().toLocaleString(), items:[...app.data.cart], total:t, method:m, user:app.data.currentUser.user};
@@ -421,7 +523,7 @@
             },
             delProd: (id) => { if(confirm('¿Eliminar?')){app.data.db=app.data.db.filter(x=>x.id!=id); app.save(); app.renderInv();} },
 
-            // --- CONFIG (ROLES & USERS) ---
+            // --- CONFIG ---
             renderConfig: () => {
                 document.getElementById('rolesList').innerHTML = app.data.roles.map(r => `<span class="role-badge" style="background:#e0e7ff;margin:2px;padding:3px;border-radius:4px;">${r.name}</span>`).join('');
                 document.getElementById('uRole').innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
@@ -437,53 +539,31 @@
                 if(u && p) { app.data.users.push({id:Date.now(), user:u, pass:p, roleId:r}); app.save(); app.renderConfig(); }
             },
             delUser: (id) => { if(confirm('¿Eliminar usuario?')){ app.data.users = app.data.users.filter(u => u.id != id); app.save(); app.renderConfig(); } },
-            
-            // Edit User Logic
             openEditUser: (id) => {
                 const u = app.data.users.find(x => x.id == id); if(!u) return;
                 document.getElementById('editUserId').value = u.id;
                 document.getElementById('editUserUser').value = u.user;
-                document.getElementById('editUserPass').value = ''; // Clean pass field
+                document.getElementById('editUserPass').value = ''; 
                 const roleSel = document.getElementById('editUserRole');
                 roleSel.innerHTML = app.data.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
                 roleSel.value = u.roleId;
-                
-                // Security Rule: Disable role change for Root Admin
                 roleSel.disabled = (u.id == 1);
-                
                 document.getElementById('editUserModal').classList.add('open');
             },
             saveUserEdit: () => {
                 const id = document.getElementById('editUserId').value;
                 const u = app.data.users.find(x => x.id == id);
-                
-                // Security Check: Only Root Admin can edit Root Admin
-                if(id == 1 && app.data.currentUser.id != 1) {
-                    alert("Acceso Denegado: Solo el Administrador Principal puede editar su cuenta.");
-                    return;
-                }
-
+                if(id == 1 && app.data.currentUser.id != 1) { alert("Acceso Denegado"); return; }
                 if(u) {
                     const newPass = document.getElementById('editUserPass').value;
-                    if(newPass) u.pass = newPass; // Only update if typed
+                    if(newPass) u.pass = newPass;
                     u.roleId = document.getElementById('editUserRole').value;
                     app.save(); app.renderConfig();
                     document.getElementById('editUserModal').classList.remove('open');
-                    alert("Usuario actualizado");
                 }
             },
 
-            // --- COMMON ---
-            updateBoxState: () => { const act = app.data.sessions.find(s=>s.status=='open'); const l = document.getElementById('posLock'); const b = document.getElementById('posStatus'); if(act) { l.classList.remove('active'); b.innerText='Abierto'; b.className='badge open'; } else { l.classList.add('active'); b.innerText='Cerrado'; b.className='badge closed'; } },
-            openBox: () => { const v=parseFloat(document.getElementById('initCash').value); if(isNaN(v))return; app.data.sessions.push({id:Date.now(),start:new Date(),init:v,salesTotal:0,salesCash:0,moves:0,expected:v,status:'open',movements:[]}); app.save(); app.checkBox(); app.nav('pos'); },
-            checkBox: () => {
-                const act = app.data.sessions.find(s=>s.status=='open');
-                document.getElementById('viewClosed').style.display=act?'none':'block'; document.getElementById('viewOpen').style.display=act?'block':'none';
-                if(act){ document.getElementById('lblCash').innerText=act.expected.toFixed(2); document.getElementById('movList').innerHTML=(act.movements||[]).map(m=>`<div>${m.desc}: ${m.amount}</div>`).join(''); }
-            },
-            addMove: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const t=document.getElementById('movType').value, d=document.getElementById('movDesc').value, a=parseFloat(document.getElementById('movAmnt').value); if(!d||isNaN(a))return; const v=t=='in'?a:-a; act.moves+=v; act.expected+=v; act.movements.push({type:t,desc:d,amount:v}); app.save(); app.checkBox(); },
-            closeBox: () => { const act=app.data.sessions.find(s=>s.status=='open'); if(!act)return; const r=parseFloat(document.getElementById('realCash').value); if(isNaN(r))return; act.real=r; act.diff=r-act.expected; act.status='closed'; act.end=new Date(); app.save(); app.checkBox(); app.updateBoxState(); },
-            
+            // --- SCANNER ---
             startScanner: (ctx) => { app.data.scanContext = ctx; document.getElementById('scanModal').classList.add('open'); app.scanner = new Html5QrcodeScanner("scanner-container", { fps: 10, qrbox: 250 }); app.scanner.render(app.onScan); },
             onScan: (txt) => {
                 app.stopScanner();
@@ -495,10 +575,18 @@
             logKardex: (id,n,t,q,s,nt) => { app.data.kardex.push({date:new Date().toLocaleString(),name:n,type:t,qty:q,stock:s,usr:app.data.currentUser.user}); },
             renderKardex: () => document.getElementById('auditTable').innerHTML=[...app.data.kardex].reverse().map(k=>`<tr><td>${k.date}</td><td>${k.name}</td><td>${k.type}</td><td>${k.qty}</td><td>${k.stock}</td><td>${k.usr}</td></tr>`).join(''),
             renderRep: () => document.getElementById('repTable').innerHTML=[...app.data.sales].reverse().map(s=>`<tr><td>${s.id}</td><td>${s.date}</td><td>${s.total}</td><td>${s.method}</td></tr>`).join(''),
+            
+            // --- PDF ---
+            downloadPDF: (sid) => {
+                const s = app.data.sessions.find(x => x.id === sid); if(!s) return;
+                const html = `<div style="padding:20px;font-family:sans-serif;"><h3>REPORTE #${s.id}</h3><p>Usuario: ${s.userName}</p><p>${new Date(s.start).toLocaleString()} - ${s.end?new Date(s.end).toLocaleString():'...'}</p><hr><table><tr><td>Ventas Tot:</td><td align="right">${s.salesTotal.toFixed(2)}</td></tr><tr><td>Efec:</td><td align="right">${(s.salesCash||0).toFixed(2)}</td></tr></table><hr><table><tr><td>Inicio:</td><td align="right">${s.init.toFixed(2)}</td></tr><tr><td>Movs:</td><td align="right">${s.moves.toFixed(2)}</td></tr><tr><td><b>ESPERADO:</b></td><td align="right"><b>${s.expected.toFixed(2)}</b></td></tr><tr><td>REAL:</td><td align="right">${(s.real||0).toFixed(2)}</td></tr><tr><td>DIF:</td><td align="right">${(s.diff||0).toFixed(2)}</td></tr></table></div>`;
+                html2pdf().set({margin:10, filename:`Cierre_${s.id}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a5',orientation:'portrait'}}).from(html).save();
+            },
+
             save: () => {
-                localStorage.setItem('pos_db_v26',JSON.stringify(app.data.db)); localStorage.setItem('pos_sales_v26',JSON.stringify(app.data.sales));
-                localStorage.setItem('pos_sessions_v26',JSON.stringify(app.data.sessions)); localStorage.setItem('pos_users_v26',JSON.stringify(app.data.users));
-                localStorage.setItem('pos_roles_v26',JSON.stringify(app.data.roles)); localStorage.setItem('pos_kardex_v26',JSON.stringify(app.data.kardex));
+                localStorage.setItem('pos_db_v27',JSON.stringify(app.data.db)); localStorage.setItem('pos_sales_v27',JSON.stringify(app.data.sales));
+                localStorage.setItem('pos_sessions_v27',JSON.stringify(app.data.sessions)); localStorage.setItem('pos_users_v27',JSON.stringify(app.data.users));
+                localStorage.setItem('pos_roles_v27',JSON.stringify(app.data.roles)); localStorage.setItem('pos_kardex_v27',JSON.stringify(app.data.kardex));
             }
         };
         
